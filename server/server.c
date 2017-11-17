@@ -13,6 +13,7 @@
 #include "rdwrn.h"
 
 #define PORT_NUMBER 50001
+#define INPUTSIZ 256
 
 // thread function
 void *client_handler(void *);
@@ -63,10 +64,8 @@ int main(void)
     // never reached...
     // ** should include a signal handler to clean up
     exit(EXIT_SUCCESS);
-} // end main()
+} 
 
-// thread function - one instance of each for each connected client
-// this is where the do-while loop will go
 void *client_handler(void *socket_desc)
 {
     //Get the socket descriptor
@@ -75,6 +74,19 @@ void *client_handler(void *socket_desc)
     send_hello(connfd);
 
     // wait for option to be sent
+    // receive into buffer
+    unsigned char send_buff[INPUTSIZ];
+    unsigned char recv_buff[INPUTSIZ];
+
+    while (1) {
+        int count = read(connfd, recv_buff, sizeof(recv_buff));
+
+        if (count == 0) {
+            break;
+        }
+
+        printf("Received: %s\n", recv_buff);
+    }
 
     shutdown(connfd, SHUT_RDWR);
     close(connfd);
@@ -86,9 +98,8 @@ void *client_handler(void *socket_desc)
     close(connfd);
 
     return 0;
-}  // end client_handler()
+}  
 
-// how to send a string
 void send_hello(int socket)
 {
     char hello_string[] = "Welcome, Systems Programming student!";
@@ -96,5 +107,5 @@ void send_hello(int socket)
     size_t n = strlen(hello_string) + 1;
     writen(socket, (unsigned char *) &n, sizeof(size_t));	
     writen(socket, (unsigned char *) hello_string, n);	  
-} // end send_hello()
+} 
 
