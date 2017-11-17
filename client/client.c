@@ -35,11 +35,21 @@ void get_hello(int socket)
     printf("Received: %zu bytes\n\n", k);
 } // end get_hello()
 
-void get_input(char *input, int length)
+int get_input(char *input, int length)
 {
 	int ch;
+
+	// Eat anything left in input buffer.
 	while ((ch = getchar()) != '\n' && ch != EOF);
 	fgets(input, length, stdin);
+
+	// Make sure string ends in NULL
+	int len = strlen(input);
+	if ((len > 0) && (input[len - 1] == '\n')) {
+        input[len - 1] = '\0';
+	}
+	
+	return len;
 }
 
 void handle_message(int socket)
@@ -48,11 +58,7 @@ void handle_message(int socket)
 	printf("Enter message: ");
 
 	// Empty input buffer
-	get_input(input, INPUTSIZ);
-	int len = strlen(input);
-	if ((len > 0) && (input[len - 1] == '\n')) {
-        input[len - 1] = '\0';
-	}
+	int len = get_input(input, INPUTSIZ);
 
 	printf("Sending: %s\n", input);
 
