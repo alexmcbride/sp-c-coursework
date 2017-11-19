@@ -10,14 +10,20 @@
 #include <string.h>
 #include <sys/types.h>
 #include <pthread.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 #include "rdwrn.h"
+
 
 #define PORT_NUMBER 50001
 #define INPUTSIZ 256
+#define STUDENT_ID "S1715224"
 
 // thread function
 void *client_handler(void *);
+void handle_student_id(int connfd);
 void send_message(int socket, char *msg);
+void get_ip_address(char *ip_str);
 
 // you shouldn't need to change main() in the server except the port number
 int main(void)
@@ -66,15 +72,39 @@ int main(void)
     exit(EXIT_SUCCESS);
 } 
 
-void handle_request(int connfd, int request_code)
+void get_ip_address(char *ip_str) 
 {
-    printf("Handling request code: %d\n", request_code);
+    int fd;
+    struct ifreq ifr;
 
-    switch (request_code) {
-        case 1:
-            send_message(connfd, "Response to request code 1!");
-        break;
-    }
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    /* I want to get an IPv4 IP address */
+    ifr.ifr_addr.sa_family = AF_INET;
+
+    /* I want an IP address attached to "eth0" */
+    strncpy(ifr.ifr_name, "eth0", IFNAMSIZ-1);
+
+    ioctl(fd, SIOCGIFADDR, &ifr);
+
+    close(fd);
+
+    /* Display result */
+    strcpy(ip_str, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
+}
+
+void handle_student_id(int connfd)
+{
+    char ip_str[INET_ADDRSTRLEN];
+    memset(ip_str, 0, INET_ADDRSTRLEN);
+    get_ip_address(ip_str);
+
+    char str[24];
+    memset(str, 0, sizeof(str));
+    strcat(str, ip_str);
+    strcat(str, ":");
+    strcat(str, STUDENT_ID);
+    send_message(connfd, str);
 }
 
 void *client_handler(void *socket_desc)
@@ -93,7 +123,13 @@ void *client_handler(void *socket_desc)
             break;
         }
 
-        handle_request(connfd, request_code);
+        printf("Handling request code: %d\n", request_code);
+
+        switch (request_code) {
+            case 1:
+                handle_student_id(connfd);
+            break;
+        }
     }
 
     // Cleanup...

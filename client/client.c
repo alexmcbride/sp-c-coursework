@@ -56,7 +56,7 @@ int main(void)
     {
     	int input;
     	printf("Main menu:\n");
-    	printf("1. Message\n");
+    	printf("1. Student ID\n");
     	printf("2. Quit\n");
     	printf("Choose option: ");
 		scanf("%d", &input);
