@@ -17,7 +17,7 @@
 
 // thread function
 void *client_handler(void *);
-void send_hello(int);
+void send_message(int socket, char *msg);
 
 // you shouldn't need to change main() in the server except the port number
 int main(void)
@@ -66,28 +66,37 @@ int main(void)
     exit(EXIT_SUCCESS);
 } 
 
+void handle_request(int connfd, int request_code)
+{
+    printf("Handling request code: %d\n", request_code);
+
+    switch (request_code) {
+        case 1:
+            send_message(connfd, "Response to request code 1!");
+        break;
+    }
+}
+
 void *client_handler(void *socket_desc)
 {
     //Get the socket descriptor
     int connfd = *(int *) socket_desc;
 
-    send_hello(connfd);
-
-    // wait for option to be sent
-    // receive into buffer
-    unsigned char send_buff[INPUTSIZ];
-    unsigned char recv_buff[INPUTSIZ];
+    send_message(connfd, "Welcome, user!");
 
     while (1) {
-        int count = read(connfd, recv_buff, sizeof(recv_buff));
+        int request_code;
+        int count = readn(connfd, (unsigned char *) &request_code, sizeof(int)); 
 
+        // Check if client disconnected.
         if (count == 0) {
             break;
         }
 
-        printf("Received: %s\n", recv_buff);
+        handle_request(connfd, request_code);
     }
 
+    // Cleanup...
     shutdown(connfd, SHUT_RDWR);
     close(connfd);
 
@@ -100,12 +109,9 @@ void *client_handler(void *socket_desc)
     return 0;
 }  
 
-void send_hello(int socket)
+void send_message(int socket, char *msg)
 {
-    char hello_string[] = "Welcome, Systems Programming student!";
-
-    size_t n = strlen(hello_string) + 1;
-    writen(socket, (unsigned char *) &n, sizeof(size_t));	
-    writen(socket, (unsigned char *) hello_string, n);	  
+    size_t length = strlen(msg) + 1;
+    writen(socket, (unsigned char *) &length, sizeof(size_t));   
+    writen(socket, (unsigned char *) msg, length);    
 } 
-

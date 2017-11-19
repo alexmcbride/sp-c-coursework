@@ -16,56 +16,8 @@
 #define PORT_NUMBER 50001
 #define INPUTSIZ 256
 
-struct packet
-{
-    int length;
-    char msg[INPUTSIZ];
-};
-
-// how to receive a string
-void get_hello(int socket)
-{
-    char hello_string[32];
-    size_t k;
-
-    readn(socket, (unsigned char *) &k, sizeof(size_t));	
-    readn(socket, (unsigned char *) hello_string, k);
-
-    printf("Hello String: %s\n", hello_string);
-    printf("Received: %zu bytes\n\n", k);
-} // end get_hello()
-
-int get_input(char *input, int length)
-{
-	int ch;
-
-	// Eat anything left in input buffer.
-	while ((ch = getchar()) != '\n' && ch != EOF);
-	fgets(input, length, stdin);
-
-	// Make sure string ends in NULL
-	int len = strlen(input);
-	if ((len > 0) && (input[len - 1] == '\n')) {
-        input[len - 1] = '\0';
-	}
-	
-	return len;
-}
-
-void handle_message(int socket)
-{
-	char input[INPUTSIZ];
-	printf("Enter message: ");
-
-	// Empty input buffer
-	int len = get_input(input, INPUTSIZ);
-
-	printf("Sending: %s\n", input);
-
-	// writen(socket, (unsigned char *) &n, sizeof(int));	
-	writen(socket, (unsigned char *) input, len);	
-}
-
+void send_request(int sockfd, int request_code);
+size_t get_message(int sockfd);
 
 int main(void)
 {
@@ -95,13 +47,8 @@ int main(void)
        printf("Connected to server...\n");
     }
 
-    // ***
-    // your own application code will go here and replace what is below... 
-    // i.e. your menu etc.
-
-
     // get a string from the server
-    get_hello(sockfd);
+    get_message(sockfd);
 
     // show menu and have user select option
     int running = 1;
@@ -112,14 +59,15 @@ int main(void)
     	printf("1. Message\n");
     	printf("2. Quit\n");
     	printf("Choose option: ");
-    	scanf("%d", &input);
+		scanf("%d", &input);
 
     	switch (input) {
     		case 1:
-    			handle_message(sockfd);
+    			send_request(sockfd, input);
+    			get_message(sockfd);
     		break;
     		case 2:
-    			printf("Goodbye!\n");
+    			printf("Now exiting!\n");
 				running = 0;
     		break;
     		default:
@@ -128,9 +76,26 @@ int main(void)
     	}
     }
 
-    // *** make sure sockets are cleaned up
-
+    // make sure sockets are cleaned up
     close(sockfd);
-
     exit(EXIT_SUCCESS);
-} // end main()
+}
+
+void send_request(int sockfd, int request_code)
+{
+	writen(sockfd, (unsigned char *)&request_code, sizeof(int));
+}
+
+size_t get_message(int sockfd)
+{
+    char message[INPUTSIZ];
+    size_t length;
+
+    readn(sockfd, (unsigned char *) &length, sizeof(size_t));	
+    readn(sockfd, (unsigned char *) message, length);
+
+    printf("Message: %s\n", message);
+    printf("Received: %zu bytes\n\n", length);
+
+    return length;
+} 
