@@ -21,6 +21,7 @@
 // thread function
 void *client_handler(void *);
 void handle_student_id(int connfd);
+void handle_server_time(int connfd);
 void send_message(int socket, char *msg);
 void get_ip_address(char *ip_str);
 
@@ -94,16 +95,44 @@ void get_ip_address(char *ip_str)
 
 void handle_student_id(int connfd)
 {
+    // Get IP address
     char ip_str[INET_ADDRSTRLEN];
     memset(ip_str, 0, INET_ADDRSTRLEN);
     get_ip_address(ip_str);
 
+    // Concat string
     char str[24];
     memset(str, 0, sizeof(str));
     strcat(str, ip_str);
     strcat(str, ":");
     strcat(str, STUDENT_ID);
+
+    // Send to client
     send_message(connfd, str);
+}
+
+void handle_server_time(int connfd)
+{
+    // Get time.
+    time_t t;
+    if ((t = time(NULL)) == -1) {
+        perror("Error - could not get time");
+        exit(EXIT_FAILURE);
+    }
+
+    // Convert to local time.
+    struct tm *tm;
+    if ((tm = localtime(&t)) == NULL) {
+        perror("Error - could not get localtime");
+        exit(EXIT_FAILURE);
+    }
+
+    // Get time string.
+    char time_str[64];
+    strftime(time_str, sizeof(time_str), "%c", tm);
+
+    // Send time message to client.
+    send_message(connfd, time_str);
 }
 
 void *client_handler(void *socket_desc)
@@ -122,21 +151,22 @@ void *client_handler(void *socket_desc)
         // Check if client disconnected.
         if (count == 0) 
         {
-            printf("Error - lost connection");
+            printf("Error - lost client connection\n");
             break;
         }
         else if (count < 0)
         {
-           printf("Error - read socket error");
+           printf("Error - client read socket error\n");
            break;
         }
-
-        printf("Handling request code: %d\n", request_code);
 
         switch (request_code) 
         {
             case 1:
                 handle_student_id(connfd);
+            break;
+            case 2:
+                handle_server_time(connfd);
             break;
         }
     }

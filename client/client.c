@@ -66,8 +66,9 @@ int main(void)
 int show_menu() 
 {
 	printf("Main menu:\n");
-	printf("1. Student ID\n");
-	printf("2. Quit\n");
+	printf("1. Get student ID\n");
+	printf("2. Get server time\n");
+	printf("3. Quit\n");
 	printf("Choose option: ");
 
 	int input;	
@@ -86,13 +87,16 @@ void handle_server(int sockfd)
     while (running)
     {
     	int input = show_menu();
-
     	switch (input) {
     		case 1:
-    			send_request(sockfd, input);
+    			send_request(sockfd, 1);
     			get_message(sockfd);
     		break;
     		case 2:
+    			send_request(sockfd, 2);
+    			get_message(sockfd);
+    		break;    		
+    		case 3:
     			printf("Now exiting!\n");
 				running = 0;
     		break;
