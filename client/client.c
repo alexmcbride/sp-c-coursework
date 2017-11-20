@@ -15,7 +15,7 @@
 
 // Constants
 #define HOST_ADDRESS "127.0.0.1"
-#define PORT_NUMBER 50001
+#define PORT_NUMBER 50031
 #define INPUTSIZ 256
 
 // Prototypes

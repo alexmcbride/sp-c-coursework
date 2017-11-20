@@ -14,18 +14,20 @@
 #include <net/if.h>
 #include "rdwrn.h"
 
-#define PORT_NUMBER 50001
+// Constants
+#define PORT_NUMBER 50031
 #define INPUTSIZ 256
 #define STUDENT_ID "S1715224"
 
-// thread function
+// Prototypes
 void *client_handler(void *);
 void handle_student_id(int connfd);
 void handle_server_time(int connfd);
 void send_message(int socket, char *msg);
 void get_ip_address(char *ip_str);
+void die(char *error);
 
-// you shouldn't need to change main() in the server except the port number
+// Functions
 int main(void)
 {
     int listenfd = 0, connfd = 0;
@@ -43,8 +45,7 @@ int main(void)
     bind(listenfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr));
 
     if (listen(listenfd, 10) == -1) {
-	    perror("Failed to listen");
-	    exit(EXIT_FAILURE);
+	    die("Error - failed to listen");
     }
     // end socket setup
 
@@ -58,8 +59,7 @@ int main(void)
 	    pthread_t sniffer_thread;
             // third parameter is a pointer to the thread function, fourth is its actual parameter
 	    if (pthread_create(&sniffer_thread, NULL, client_handler, (void *) &connfd) < 0) {
-	        perror("could not create thread");
-	        exit(EXIT_FAILURE);
+	        die("Error - could not create thread");
 	    }
 
 	    //Now join the thread , so that we dont terminate before the thread
@@ -69,27 +69,31 @@ int main(void)
 
     // never reached...
     // ** should include a signal handler to clean up
+    // shutdown(listenfd, SHUT_RDWR);
+    // close(listenfd);
     exit(EXIT_SUCCESS);
 } 
+
+void die(char *error)
+{
+    puts(error);
+    exit(EXIT_FAILURE);
+}
 
 void get_ip_address(char *ip_str) 
 {
     int fd;
     struct ifreq ifr;
+    memset(&ifr, 0, sizeof(struct ifreq));
 
+    // Get IP addr from struct
     fd = socket(AF_INET, SOCK_DGRAM, 0);
-
-    /* I want to get an IPv4 IP address */
     ifr.ifr_addr.sa_family = AF_INET;
-
-    /* I want an IP address attached to "eth0" */
     strncpy(ifr.ifr_name, "eth0", IFNAMSIZ-1);
-
     ioctl(fd, SIOCGIFADDR, &ifr);
-
     close(fd);
 
-    /* Copy result into parameter */
+    // Copy result into parameter
     strcpy(ip_str, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
 }
 
@@ -102,10 +106,7 @@ void handle_student_id(int connfd)
 
     // Concat string
     char str[24];
-    memset(str, 0, sizeof(str));
-    strcat(str, ip_str);
-    strcat(str, ":");
-    strcat(str, STUDENT_ID);
+    sprintf(str, "%s:%s", ip_str, STUDENT_ID);
 
     // Send to client
     send_message(connfd, str);
@@ -116,15 +117,13 @@ void handle_server_time(int connfd)
     // Get time.
     time_t t;
     if ((t = time(NULL)) == -1) {
-        perror("Error - could not get time");
-        exit(EXIT_FAILURE);
+        die("Error - could not get time");
     }
 
     // Convert to local time.
     struct tm *tm;
     if ((tm = localtime(&t)) == NULL) {
-        perror("Error - could not get localtime");
-        exit(EXIT_FAILURE);
+        die("Error - could not get localtime");
     }
 
     // Get time string.
@@ -137,7 +136,6 @@ void handle_server_time(int connfd)
 
 void *client_handler(void *socket_desc)
 {
-    //Get the socket descriptor
     int connfd = *(int *) socket_desc;
 
     // Send welcome message to client.
@@ -156,10 +154,11 @@ void *client_handler(void *socket_desc)
         }
         else if (count < 0)
         {
-           printf("Error - client read socket error\n");
+           printf("Error - client read error: %d\n", count);
            break;
         }
 
+        // Handle client requests
         switch (request_code) 
         {
             case 1:
@@ -170,10 +169,6 @@ void *client_handler(void *socket_desc)
             break;
         }
     }
-
-    // Cleanup...
-    shutdown(connfd, SHUT_RDWR);
-    close(connfd);
 
     printf("Thread %lu exiting\n", (unsigned long) pthread_self());
 
@@ -186,7 +181,7 @@ void *client_handler(void *socket_desc)
 
 void send_message(int socket, char *msg)
 {
-    size_t length = strlen(msg) + 1;
+    size_t length = strlen(msg) + 1; // Add one to account for NULL terminator
     writen(socket, (unsigned char *) &length, sizeof(size_t));   
     writen(socket, (unsigned char *) msg, length);    
 } 
