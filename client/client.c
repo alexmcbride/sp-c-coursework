@@ -18,6 +18,9 @@
 
 void send_request(int sockfd, int request_code);
 size_t get_message(int sockfd);
+size_t read_socket(int sockfd, unsigned char *buffer, int length);
+size_t write_socket(int sockfd, unsigned char *buffer, int length);
+void die(char *message);
 
 int main(void)
 {
@@ -71,7 +74,7 @@ int main(void)
 				running = 0;
     		break;
     		default:
-    			fprintf(stderr, "%s", "Error: invalid input\n");
+    			fprintf(stderr, "%s", "Error - invalid input\n");
     		break;
     	}
     }
@@ -83,16 +86,49 @@ int main(void)
 
 void send_request(int sockfd, int request_code)
 {
-	writen(sockfd, (unsigned char *)&request_code, sizeof(int));
+	write_socket(sockfd, (unsigned char *)&request_code, sizeof(int));
+}
+
+size_t write_socket(int sockfd, unsigned char *buffer, int length)
+{
+	size_t result = writen(sockfd, buffer, length);
+	if (result <= 0)
+	{
+		close(sockfd);
+		die("Error - read socket error");
+	}
+	return result;
+}
+
+void die(char *message) 
+{
+	puts(message);
+	exit(EXIT_FAILURE);
+}
+
+size_t read_socket(int sockfd, unsigned char *buffer, int length) 
+{
+	size_t result = readn(sockfd, (unsigned char *)buffer, length);
+	if (result == 0) 
+	{
+		close(sockfd);
+		die("Error - connection lost");
+	}
+	else if (result < 0)
+	{
+		close(sockfd);
+		die("Error - read socket error");
+	}
+	return result;
 }
 
 size_t get_message(int sockfd)
-{
+{    
+	size_t length;
     char message[INPUTSIZ];
-    size_t length;
 
-    readn(sockfd, (unsigned char *) &length, sizeof(size_t));	
-    readn(sockfd, (unsigned char *) message, length);
+    read_socket(sockfd, (unsigned char *) &length, sizeof(size_t));	
+    read_socket(sockfd, (unsigned char *) message, length);
 
     printf("Message: %s\n", message);
     printf("Received: %zu bytes\n\n", length);
