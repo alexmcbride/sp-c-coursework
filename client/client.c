@@ -13,15 +13,20 @@
 #include <arpa/inet.h>
 #include "rdwrn.h"
 
+// Constants
+#define HOST_ADDRESS "127.0.0.1"
 #define PORT_NUMBER 50001
 #define INPUTSIZ 256
 
+// Prototypes
+void handle_server(int sockfd);
 void send_request(int sockfd, int request_code);
 size_t get_message(int sockfd);
 size_t read_socket(int sockfd, unsigned char *buffer, int length);
 size_t write_socket(int sockfd, unsigned char *buffer, int length);
 void die(char *message);
 
+// Functions
 int main(void)
 {
     // *** this code down to the next "// ***" does not need to be changed except the port number
@@ -37,7 +42,7 @@ int main(void)
 
     // IP address and port of server we want to connect to
     serv_addr.sin_port = htons(PORT_NUMBER);
-    serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    serv_addr.sin_addr.s_addr = inet_addr(HOST_ADDRESS);
 
     // try to connect...
     if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) == -1)  
@@ -50,19 +55,37 @@ int main(void)
        printf("Connected to server...\n");
     }
 
-    // get a string from the server
+    // Handle communication with the server.
+    handle_server(sockfd);
+
+    // make sure sockets are cleaned up
+    close(sockfd);
+    exit(EXIT_SUCCESS);
+}
+
+int show_menu() 
+{
+	printf("Main menu:\n");
+	printf("1. Student ID\n");
+	printf("2. Quit\n");
+	printf("Choose option: ");
+
+	int input;	
+	scanf("%d", &input);
+
+	return input;
+}
+
+void handle_server(int sockfd)
+{
+	// get welcome message from the server
     get_message(sockfd);
 
     // show menu and have user select option
     int running = 1;
     while (running)
     {
-    	int input;
-    	printf("Main menu:\n");
-    	printf("1. Student ID\n");
-    	printf("2. Quit\n");
-    	printf("Choose option: ");
-		scanf("%d", &input);
+    	int input = show_menu();
 
     	switch (input) {
     		case 1:
@@ -78,10 +101,6 @@ int main(void)
     		break;
     	}
     }
-
-    // make sure sockets are cleaned up
-    close(sockfd);
-    exit(EXIT_SUCCESS);
 }
 
 void send_request(int sockfd, int request_code)
@@ -130,8 +149,7 @@ size_t get_message(int sockfd)
     read_socket(sockfd, (unsigned char *) &length, sizeof(size_t));	
     read_socket(sockfd, (unsigned char *) message, length);
 
-    printf("Message: %s\n", message);
-    printf("Received: %zu bytes\n\n", length);
+    printf(">> %s\n", message);
 
     return length;
 } 

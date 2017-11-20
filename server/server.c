@@ -14,7 +14,6 @@
 #include <net/if.h>
 #include "rdwrn.h"
 
-
 #define PORT_NUMBER 50001
 #define INPUTSIZ 256
 #define STUDENT_ID "S1715224"
@@ -89,7 +88,7 @@ void get_ip_address(char *ip_str)
 
     close(fd);
 
-    /* Display result */
+    /* Copy result into parameter */
     strcpy(ip_str, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
 }
 
@@ -112,20 +111,30 @@ void *client_handler(void *socket_desc)
     //Get the socket descriptor
     int connfd = *(int *) socket_desc;
 
-    send_message(connfd, "Welcome, user!");
+    // Send welcome message to client.
+    send_message(connfd, "Welcome to the server!");
 
-    while (1) {
+    while (1) 
+    {
         int request_code;
         int count = readn(connfd, (unsigned char *) &request_code, sizeof(int)); 
 
         // Check if client disconnected.
-        if (count == 0) {
+        if (count == 0) 
+        {
+            printf("Error - lost connection");
             break;
+        }
+        else if (count < 0)
+        {
+           printf("Error - read socket error");
+           break;
         }
 
         printf("Handling request code: %d\n", request_code);
 
-        switch (request_code) {
+        switch (request_code) 
+        {
             case 1:
                 handle_student_id(connfd);
             break;
