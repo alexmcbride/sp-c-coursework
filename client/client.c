@@ -12,20 +12,16 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include "rdwrn.h"
-#include "../shared.h"
+#include "../shared/shared.h"
 
 // Constants
 #define HOST_ADDRESS "127.0.0.1"
-#define PORT_NUMBER 50031
 #define INPUTSIZ 256
 
 // Prototypes
 void handle_server(int sockfd);
 void send_request(int sockfd, int request_code);
 size_t get_message(int sockfd);
-size_t read_socket(int sockfd, unsigned char *buffer, int length);
-size_t write_socket(int sockfd, unsigned char *buffer, int length);
-void die(char *message);
 
 // Functions
 int main(void)
@@ -111,39 +107,6 @@ void handle_server(int sockfd)
 void send_request(int sockfd, int request_code)
 {
 	write_socket(sockfd, (unsigned char *)&request_code, sizeof(int));
-}
-
-size_t write_socket(int sockfd, unsigned char *buffer, int length)
-{
-	size_t result = writen(sockfd, buffer, length);
-	if (result <= 0)
-	{
-		close(sockfd);
-		die("Error - read socket error");
-	}
-	return result;
-}
-
-void die(char *message) 
-{
-	puts(message);
-	exit(EXIT_FAILURE);
-}
-
-size_t read_socket(int sockfd, unsigned char *buffer, int length) 
-{
-	size_t result = readn(sockfd, (unsigned char *)buffer, length);
-	if (result == 0) 
-	{
-		close(sockfd);
-		die("Error - connection lost");
-	}
-	else if (result < 0)
-	{
-		close(sockfd);
-		die("Error - read socket error");
-	}
-	return result;
 }
 
 size_t get_message(int sockfd)

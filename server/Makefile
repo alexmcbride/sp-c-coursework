@@ -1,7 +1,7 @@
 # Only the next 3 lines need to be edited - leave the rest!
 TARGET = server
-DEPS = rdwrn.h ../shared.h
-OBJ = rdwrn.o server.o
+DEPS = rdwrn.h ../shared/shared.h
+OBJ = rdwrn.o server.o ../shared/shared.o
 
 CC=cc
 CFLAGS=-I. -Wall -g -O0 -pthread

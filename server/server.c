@@ -13,10 +13,9 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include "rdwrn.h"
-#include "../shared.h"
+#include "../shared/shared.h"
 
 // Constants
-#define PORT_NUMBER 50031
 #define INPUTSIZ 256
 #define STUDENT_ID "S1715224"
 
@@ -26,7 +25,6 @@ void handle_student_id(int connfd);
 void handle_server_time(int connfd);
 void send_message(int socket, char *msg);
 void get_ip_address(char *ip_str);
-void die(char *error);
 
 // Functions
 int main(void)
@@ -74,12 +72,6 @@ int main(void)
     // close(listenfd);
     exit(EXIT_SUCCESS);
 } 
-
-void die(char *error)
-{
-    puts(error);
-    exit(EXIT_FAILURE);
-}
 
 void get_ip_address(char *ip_str) 
 {
@@ -145,29 +137,18 @@ void *client_handler(void *socket_desc)
     while (1) 
     {
         int request_code;
-        size_t result = readn(connfd, (unsigned char *) &request_code, sizeof(int)); 
-
-        // Check if client disconnected.
-        if (result == 0) 
+        if (read_socket(connfd, (unsigned char *) &request_code, sizeof(int))) 
         {
-            printf("Error - lost client connection\n");
-            break;
-        }
-        else if (result < 0)
-        {
-           printf("Error - client read error: %d\n", (int)result);
-           break;
-        }
-
-        // Handle client requests
-        switch (request_code) 
-        {
-            case REQUEST_STUDENT_ID:
-                handle_student_id(connfd);
-            break;
-            case REQUEST_TIME:
-                handle_server_time(connfd);
-            break;
+            // Handle client requests
+            switch (request_code) 
+            {
+                case REQUEST_STUDENT_ID:
+                    handle_student_id(connfd);
+                break;
+                case REQUEST_TIME:
+                    handle_server_time(connfd);
+                break;
+            }
         }
     }
 

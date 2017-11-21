@@ -1,7 +1,7 @@
 # Only the next 3 lines need to be edited - leave the rest!
 TARGET = client 
-DEPS = rdwrn.h ../shared.h
-OBJ = rdwrn.o client.o
+DEPS = rdwrn.h ../shared/shared.h
+OBJ = rdwrn.o client.o ../shared/shared.o
 
 CC=cc
 CFLAGS=-I. -Wall -g -O0
