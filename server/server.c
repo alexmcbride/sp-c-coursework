@@ -12,11 +12,11 @@
 #include <pthread.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include <sys/utsname.h>
 #include "rdwrn.h"
 #include "../shared/shared.h"
 
 // Constants
-#define INPUTSIZ 256
 #define STUDENT_ID "S1715224"
 
 // Prototypes
@@ -127,6 +127,16 @@ void handle_server_time(int connfd)
     send_message(connfd, time_str);
 }
 
+void handle_uname(int connfd)
+{
+    struct utsname uts;
+    if (uname(&uts) == -1) {
+        die("uname error");
+    }
+
+    write_socket(connfd, (unsigned char *)&uts, sizeof(struct utsname));
+}
+
 void *client_handler(void *socket_desc)
 {
     int connfd = *(int *) socket_desc;
@@ -137,18 +147,32 @@ void *client_handler(void *socket_desc)
     while (1) 
     {
         int request_code;
-        if (read_socket(connfd, (unsigned char *) &request_code, sizeof(int))) 
+        int count = readn(connfd, (unsigned char *) &request_code, sizeof(int));
+
+        // Check if client disconnected.
+        if (count == 0) 
         {
-            // Handle client requests
-            switch (request_code) 
-            {
-                case REQUEST_STUDENT_ID:
-                    handle_student_id(connfd);
-                break;
-                case REQUEST_TIME:
-                    handle_server_time(connfd);
-                break;
-            }
+            printf("Error - lost client connection\n");
+            break;
+        }
+        else if (count < 0)
+        {
+           printf("Error - client read error: %d\n", count);
+           break;
+        }
+
+        // Handle client requests
+        switch (request_code) 
+        {
+            case REQUEST_STUDENT_ID:
+                handle_student_id(connfd);
+            break;
+            case REQUEST_TIME:
+                handle_server_time(connfd);
+            break;
+            case REQUEST_UNAME:
+                handle_uname(connfd);
+            break;
         }
     }
 

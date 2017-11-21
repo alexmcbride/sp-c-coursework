@@ -11,17 +11,19 @@
 #include <unistd.h>
 #include <errno.h>
 #include <arpa/inet.h>
+#include <sys/utsname.h>
 #include "rdwrn.h"
 #include "../shared/shared.h"
 
 // Constants
 #define HOST_ADDRESS "127.0.0.1"
-#define INPUTSIZ 256
+#define INPUTSIZ 512
 
 // Prototypes
 void handle_server(int sockfd);
 void send_request(int sockfd, int request_code);
 size_t get_message(int sockfd);
+size_t get_uname(int sockfd);
 
 // Functions
 int main(void)
@@ -31,8 +33,7 @@ int main(void)
     struct sockaddr_in serv_addr;
 
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-	perror("Error - could not create socket");
-	exit(EXIT_FAILURE);
+	   die("Error - could not create socket");
     }
 
     serv_addr.sin_family = AF_INET;
@@ -44,8 +45,7 @@ int main(void)
     // try to connect...
     if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) == -1)  
     {
-		perror("Error - connect failed\n");
-		exit(1);
+		die("Error - connect failed\n");
     } 
     else
     {
@@ -65,7 +65,8 @@ int show_menu()
 	printf("Main menu:\n");
 	printf("1. Get student ID\n");
 	printf("2. Get server time\n");
-	printf("3. Quit\n");
+    printf("3. Get uname info\n");
+	printf("4. Quit\n");
 	printf("Choose option: ");
 
 	int input;	
@@ -93,6 +94,10 @@ void handle_server(int sockfd)
     			send_request(sockfd, REQUEST_TIME);
     			get_message(sockfd);
     		break;    		
+            case REQUEST_UNAME:
+                send_request(sockfd, REQUEST_UNAME);
+                get_uname(sockfd);
+            break;
     		case REQUEST_QUIT:
     			printf("Now exiting!\n");
 				running = 0;
@@ -121,3 +126,17 @@ size_t get_message(int sockfd)
 
     return length;
 } 
+
+size_t get_uname(int sockfd)
+{
+    struct utsname uts;
+    int result = read_socket(sockfd, (unsigned char *)&uts, sizeof(struct utsname));
+
+    printf(">> Node name:    %s\n", uts.nodename);
+    printf(">> System name:  %s\n", uts.sysname);
+    printf(">> Release:      %s\n", uts.release);
+    printf(">> Version:      %s\n", uts.version);
+    printf(">> Machine:      %s\n", uts.machine);
+
+    return result;
+}
