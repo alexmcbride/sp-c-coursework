@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include "rdwrn.h"
+#include "../shared.h"
 
 // Constants
 #define HOST_ADDRESS "127.0.0.1"
@@ -88,15 +89,15 @@ void handle_server(int sockfd)
     {
     	int input = show_menu();
     	switch (input) {
-    		case 1:
-    			send_request(sockfd, 1);
+    		case REQUEST_STUDENT_ID:
+    			send_request(sockfd, REQUEST_STUDENT_ID);
     			get_message(sockfd);
     		break;
-    		case 2:
-    			send_request(sockfd, 2);
+    		case REQUEST_TIME:
+    			send_request(sockfd, REQUEST_TIME);
     			get_message(sockfd);
     		break;    		
-    		case 3:
+    		case REQUEST_QUIT:
     			printf("Now exiting!\n");
 				running = 0;
     		break;

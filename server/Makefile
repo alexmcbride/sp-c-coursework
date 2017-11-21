@@ -1,6 +1,6 @@
 # Only the next 3 lines need to be edited - leave the rest!
 TARGET = server
-DEPS = rdwrn.h
+DEPS = rdwrn.h ../shared.h
 OBJ = rdwrn.o server.o
 
 CC=cc

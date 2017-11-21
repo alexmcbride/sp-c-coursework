@@ -13,6 +13,7 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include "rdwrn.h"
+#include "../shared.h"
 
 // Constants
 #define PORT_NUMBER 50031
@@ -144,27 +145,27 @@ void *client_handler(void *socket_desc)
     while (1) 
     {
         int request_code;
-        int count = readn(connfd, (unsigned char *) &request_code, sizeof(int)); 
+        size_t result = readn(connfd, (unsigned char *) &request_code, sizeof(int)); 
 
         // Check if client disconnected.
-        if (count == 0) 
+        if (result == 0) 
         {
             printf("Error - lost client connection\n");
             break;
         }
-        else if (count < 0)
+        else if (result < 0)
         {
-           printf("Error - client read error: %d\n", count);
+           printf("Error - client read error: %d\n", (int)result);
            break;
         }
 
         // Handle client requests
         switch (request_code) 
         {
-            case 1:
+            case REQUEST_STUDENT_ID:
                 handle_student_id(connfd);
             break;
-            case 2:
+            case REQUEST_TIME:
                 handle_server_time(connfd);
             break;
         }
