@@ -13,7 +13,7 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <sys/utsname.h>
-#include "rdwrn.h"
+#include "../shared/rdwrn.h"
 #include "../shared/shared.h"
 
 // Constants
