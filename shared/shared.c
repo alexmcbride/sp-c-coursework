@@ -8,18 +8,21 @@ void die(char *message)
 
 size_t write_socket(int sockfd, unsigned char *buffer, int length)
 {
-	size_t result = writen(sockfd, buffer, length);
+	int result = writen(sockfd, buffer, length);
 	if (result <= 0)
 	{
 		close(sockfd);
-		die("Error - read socket error");
+
+		char error[ERR_MSG_SIZE];
+		sprintf(error, "Error - write socket error: %d", result);
+		die(error);
 	}
 	return result;
 }
 
 size_t read_socket(int sockfd, unsigned char *buffer, int length) 
 {
-	size_t result = readn(sockfd, (unsigned char *)buffer, length);
+	int result = readn(sockfd, (unsigned char *)buffer, length);
 	if (result == 0) 
 	{
 		close(sockfd);
@@ -28,7 +31,10 @@ size_t read_socket(int sockfd, unsigned char *buffer, int length)
 	else if (result < 0)
 	{
 		close(sockfd);
-		die("Error - read socket error");
+
+		char error[ERR_MSG_SIZE];
+		sprintf(error, "Error - read socket error: %d", result);
+		die(error);
 	}
 	return result;
 }

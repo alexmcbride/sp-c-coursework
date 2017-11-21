@@ -22,8 +22,8 @@
 // Prototypes
 void handle_server(int sockfd);
 void send_request(int sockfd, int request_code);
-size_t get_message(int sockfd);
-size_t get_uname(int sockfd);
+void get_message(int sockfd);
+void get_uname(int sockfd);
 
 // Functions
 int main(void)
@@ -114,7 +114,7 @@ void send_request(int sockfd, int request_code)
 	write_socket(sockfd, (unsigned char *)&request_code, sizeof(int));
 }
 
-size_t get_message(int sockfd)
+void get_message(int sockfd)
 {    
 	size_t length;
     char message[INPUTSIZ];
@@ -123,20 +123,16 @@ size_t get_message(int sockfd)
     read_socket(sockfd, (unsigned char *) message, length);
 
     printf(">> %s\n", message);
-
-    return length;
 } 
 
-size_t get_uname(int sockfd)
+void get_uname(int sockfd)
 {
     struct utsname uts;
-    int result = read_socket(sockfd, (unsigned char *)&uts, sizeof(struct utsname));
+    read_socket(sockfd, (unsigned char *)&uts, sizeof(struct utsname));
 
     printf(">> Node name:    %s\n", uts.nodename);
     printf(">> System name:  %s\n", uts.sysname);
     printf(">> Release:      %s\n", uts.release);
     printf(">> Version:      %s\n", uts.version);
     printf(">> Machine:      %s\n", uts.machine);
-
-    return result;
 }

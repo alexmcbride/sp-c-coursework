@@ -7,6 +7,7 @@
 #include "rdwrn.h"
 
 #define PORT_NUMBER 50031
+#define ERR_MSG_SIZE 64
 
 #define REQUEST_STUDENT_ID 1
 #define REQUEST_TIME 2
