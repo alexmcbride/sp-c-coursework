@@ -44,26 +44,26 @@ int main(void)
     bind(listenfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr));
 
     if (listen(listenfd, 10) == -1) {
-	    die("Error - failed to listen");
+        die("Error - failed to listen");
     }
     // end socket setup
 
     //Accept and incoming connection
     puts("Waiting for incoming connections...");
     while (1) {
-	    printf("Waiting for a client to connect...\n");
-	    connfd = accept(listenfd, (struct sockaddr *) &client_addr, &socksize);
-	    printf("Connection accepted...\n");
+        printf("Waiting for a client to connect...\n");
+        connfd = accept(listenfd, (struct sockaddr *) &client_addr, &socksize);
+        printf("Connection accepted...\n");
 
-	    pthread_t sniffer_thread;
-            // third parameter is a pointer to the thread function, fourth is its actual parameter
-	    if (pthread_create(&sniffer_thread, NULL, client_handler, (void *) &connfd) < 0) {
-	        die("Error - could not create thread");
-	    }
+        pthread_t sniffer_thread;
+        // third parameter is a pointer to the thread function, fourth is its actual parameter
+        if (pthread_create(&sniffer_thread, NULL, client_handler, (void *) &connfd) < 0) {
+            die("Error - could not create thread");
+        }
 
-	    //Now join the thread , so that we dont terminate before the thread
-	    //pthread_join( sniffer_thread , NULL);
-	    printf("Handler assigned\n");
+        //Now join the thread , so that we dont terminate before the thread
+        //pthread_join( sniffer_thread , NULL);
+        printf("Handler assigned\n");
     }
 
     // never reached...
@@ -71,9 +71,9 @@ int main(void)
     // shutdown(listenfd, SHUT_RDWR);
     // close(listenfd);
     exit(EXIT_SUCCESS);
-} 
+}
 
-void get_ip_address(char *ip_str) 
+void get_ip_address(char *ip_str)
 {
     int fd;
     struct ifreq ifr;
@@ -144,34 +144,34 @@ void *client_handler(void *socket_desc)
     // Send welcome message to client.
     send_message(connfd, "Welcome to the server!");
 
-    while (1) 
+    while (1)
     {
         int request_code;
         int count = readn(connfd, (unsigned char *) &request_code, sizeof(int));
 
         // Check if client disconnected.
-        if (count == 0) 
+        if (count == 0)
         {
             printf("Error - lost client connection\n");
             break;
         }
         else if (count < 0)
         {
-           printf("Error - client read error: %d\n", count);
-           break;
+            printf("Error - client read error: %d\n", count);
+            break;
         }
 
         // Handle client requests
-        switch (request_code) 
+        switch (request_code)
         {
             case REQUEST_STUDENT_ID:
-                handle_student_id(connfd);
+            handle_student_id(connfd);
             break;
             case REQUEST_TIME:
-                handle_server_time(connfd);
+            handle_server_time(connfd);
             break;
             case REQUEST_UNAME:
-                handle_uname(connfd);
+            handle_uname(connfd);
             break;
         }
     }
@@ -183,11 +183,11 @@ void *client_handler(void *socket_desc)
     close(connfd);
 
     return 0;
-}  
+}
 
 void send_message(int socket, char *msg)
 {
     size_t length = strlen(msg) + 1; // Add one to account for NULL terminator
-    writen(socket, (unsigned char *) &length, sizeof(size_t));   
-    writen(socket, (unsigned char *) msg, length);    
-} 
+    writen(socket, (unsigned char *) &length, sizeof(size_t));
+    writen(socket, (unsigned char *) msg, length);
+}

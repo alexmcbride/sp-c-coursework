@@ -32,8 +32,9 @@ int main(void)
     int sockfd = 0;
     struct sockaddr_in serv_addr;
 
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-	   die("Error - could not create socket");
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    {
+        die("Error - could not create socket");
     }
 
     serv_addr.sin_family = AF_INET;
@@ -43,13 +44,13 @@ int main(void)
     serv_addr.sin_addr.s_addr = inet_addr(HOST_ADDRESS);
 
     // try to connect...
-    if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) == -1)  
+    if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) == -1)
     {
-		die("Error - connect failed\n");
-    } 
+        die("Error - connect failed\n");
+    }
     else
     {
-       printf("Connected to server...\n");
+        printf("Connected to server...\n");
     }
 
     // Handle communication with the server.
@@ -60,70 +61,70 @@ int main(void)
     exit(EXIT_SUCCESS);
 }
 
-int show_menu() 
+int show_menu()
 {
-	printf("Main menu:\n");
-	printf("1. Get student ID\n");
-	printf("2. Get server time\n");
+    printf("Main menu:\n");
+    printf("1. Get student ID\n");
+    printf("2. Get server time\n");
     printf("3. Get uname info\n");
-	printf("4. Quit\n");
-	printf("Choose option: ");
+    printf("4. Quit\n");
+    printf("Choose option: ");
 
-	int input;	
-	scanf("%d", &input);
+    int input;
+    scanf("%d", &input);
 
-	return input;
+    return input;
 }
 
 void handle_server(int sockfd)
 {
-	// get welcome message from the server
+    // get welcome message from the server
     get_message(sockfd);
 
     // show menu and have user select option
     int running = 1;
     while (running)
     {
-    	int input = show_menu();
-    	switch (input) {
-    		case REQUEST_STUDENT_ID:
-    			send_request(sockfd, REQUEST_STUDENT_ID);
-    			get_message(sockfd);
-    		break;
-    		case REQUEST_TIME:
-    			send_request(sockfd, REQUEST_TIME);
-    			get_message(sockfd);
-    		break;    		
-            case REQUEST_UNAME:
-                send_request(sockfd, REQUEST_UNAME);
-                get_uname(sockfd);
+        int input = show_menu();
+        switch (input) {
+            case REQUEST_STUDENT_ID:
+            send_request(sockfd, REQUEST_STUDENT_ID);
+            get_message(sockfd);
             break;
-    		case REQUEST_QUIT:
-    			printf("Now exiting!\n");
-				running = 0;
-    		break;
-    		default:
-    			fprintf(stderr, "%s", "Error - invalid input\n");
-    		break;
-    	}
+            case REQUEST_TIME:
+            send_request(sockfd, REQUEST_TIME);
+            get_message(sockfd);
+            break;
+            case REQUEST_UNAME:
+            send_request(sockfd, REQUEST_UNAME);
+            get_uname(sockfd);
+            break;
+            case REQUEST_QUIT:
+            printf("Now exiting!\n");
+            running = 0;
+            break;
+            default:
+            fprintf(stderr, "%s", "Error - invalid input\n");
+            break;
+        }
     }
 }
 
 void send_request(int sockfd, int request_code)
 {
-	write_socket(sockfd, (unsigned char *)&request_code, sizeof(int));
+    write_socket(sockfd, (unsigned char *)&request_code, sizeof(int));
 }
 
 void get_message(int sockfd)
-{    
-	size_t length;
+{
+    size_t length;
     char message[INPUTSIZ];
 
-    read_socket(sockfd, (unsigned char *) &length, sizeof(size_t));	
+    read_socket(sockfd, (unsigned char *) &length, sizeof(size_t));
     read_socket(sockfd, (unsigned char *) message, length);
 
     printf(">> %s\n", message);
-} 
+}
 
 void get_uname(int sockfd)
 {
