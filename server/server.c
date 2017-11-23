@@ -13,6 +13,9 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <sys/utsname.h>
+#include <signal.h>
+#include <time.h>
+#include <sys/time.h>
 #include "../shared/rdwrn.h"
 #include "../shared/shared.h"
 
@@ -25,11 +28,22 @@ void handle_student_id(int connfd);
 void handle_server_time(int connfd);
 void send_message(int socket, char *msg);
 void get_ip_address(char *ip_str);
+void initialize_signal_handler();
+static void signal_handler(int sig, siginfo_t *siginfo, void *context);
+
+// Global variables
+static struct timeval start_time;
 
 // Functions
 int main(void)
 {
     int listenfd = 0, connfd = 0;
+
+    // Store server start time.
+    if (gettimeofday(&start_time, NULL) == -1) {
+        perror("gettimeofday error");
+        exit(EXIT_FAILURE);
+    }
 
     struct sockaddr_in serv_addr;
     struct sockaddr_in client_addr;
@@ -47,6 +61,9 @@ int main(void)
         die("Error - failed to listen");
     }
     // end socket setup
+
+    // Init sigaction to handle SIGINT
+    initialize_signal_handler();
 
     //Accept and incoming connection
     puts("Waiting for incoming connections...");
@@ -190,4 +207,41 @@ void send_message(int socket, char *msg)
     size_t length = strlen(msg) + 1; // Add one to account for NULL terminator
     writen(socket, (unsigned char *) &length, sizeof(size_t));
     writen(socket, (unsigned char *) msg, length);
+}
+
+void initialize_signal_handler()
+{
+    struct sigaction act;
+    memset(&act, '\0', sizeof(act));
+
+    // this is a pointer to a function
+    act.sa_sigaction = &signal_handler;
+
+    // the SA_SIGINFO flag tells sigaction() to use the sa_sigaction field, not sa_handler
+    act.sa_flags = SA_SIGINFO;
+
+    if (sigaction(SIGINT, &act, NULL) == -1)
+    {
+        die("sigaction failed");
+    }
+}
+
+// signal handler to be called on receipt of (in this case) SIGTERM
+static void signal_handler(int sig, siginfo_t *siginfo, void *context)
+{
+    struct timeval end_time;
+
+    // get "wall clock" time at end
+    if (gettimeofday(&end_time, NULL) == -1) {
+        perror("gettimeofday error");
+        exit(EXIT_FAILURE);
+    }
+
+    // in microseconds...
+    printf("Total execution time = %f seconds\n",
+	   (double) (end_time.tv_usec - start_time.tv_usec) / 1000000 +
+	   (double) (end_time.tv_sec - start_time.tv_sec));
+
+    printf("PID: %ld, UID: %ld\n", (long) siginfo->si_pid, (long) siginfo->si_uid);
+    exit(EXIT_FAILURE);
 }
