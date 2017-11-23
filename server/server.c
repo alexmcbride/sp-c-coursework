@@ -25,19 +25,20 @@
 #define STUDENT_ID "S1715224"
 #define UPLOAD_DIR "upload/"
 
-// Prototypes
+// Function declarations
 void *client_handler(void *);
 void handle_student_id(int connfd);
 void handle_server_time(int connfd);
 void handle_uname(int connfd);
 void handle_file_list(int connfd);
+int filter_dir(const struct dirent *e);
 void send_message(int socket, char *msg);
 void get_ip_address(char *ip_str);
 void store_start_time();
 void initialize_signal_handler();
 static void signal_handler(int sig, siginfo_t *siginfo, void *context);
 
-// Global variables
+// Global variable
 static struct timeval start_time;
 
 // Functions
@@ -59,7 +60,8 @@ int main(void)
 
     bind(listenfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr));
 
-    if (listen(listenfd, 10) == -1) {
+    if (listen(listenfd, 10) == -1)
+    {
         die("Error - failed to listen");
     }
     // end socket setup
@@ -69,14 +71,16 @@ int main(void)
 
     //Accept and incoming connection
     puts("Waiting for incoming connections...");
-    while (1) {
+    while (1)
+    {
         printf("Waiting for a client to connect...\n");
         connfd = accept(listenfd, (struct sockaddr *) &client_addr, &socksize);
         printf("Connection accepted...\n");
 
         pthread_t sniffer_thread;
         // third parameter is a pointer to the thread function, fourth is its actual parameter
-        if (pthread_create(&sniffer_thread, NULL, client_handler, (void *) &connfd) < 0) {
+        if (pthread_create(&sniffer_thread, NULL, client_handler, (void *) &connfd) < 0) 
+        {
             die("Error - could not create thread");
         }
 
@@ -128,13 +132,15 @@ void handle_server_time(int connfd)
 {
     // Get time.
     time_t t;
-    if ((t = time(NULL)) == -1) {
+    if ((t = time(NULL)) == -1) 
+    {
         die("Error - could not get time");
     }
 
     // Convert to local time.
     struct tm *tm;
-    if ((tm = localtime(&t)) == NULL) {
+    if ((tm = localtime(&t)) == NULL) 
+    {
         die("Error - could not get localtime");
     }
 
@@ -149,7 +155,8 @@ void handle_server_time(int connfd)
 void handle_uname(int connfd)
 {
     struct utsname uts;
-    if (uname(&uts) == -1) {
+    if (uname(&uts) == -1)
+    {
         die("uname error");
     }
 
@@ -229,16 +236,16 @@ void *client_handler(void *socket_desc)
         switch (request_code)
         {
             case REQUEST_STUDENT_ID:
-            handle_student_id(connfd);
+                handle_student_id(connfd);
             break;
             case REQUEST_TIME:
-            handle_server_time(connfd);
+                handle_server_time(connfd);
             break;
             case REQUEST_UNAME:
-            handle_uname(connfd);
+                handle_uname(connfd);
             break;
             case REQUEST_FILE_LIST:
-            handle_file_list(connfd);
+                handle_file_list(connfd);
             break;
         }
     }
@@ -262,7 +269,8 @@ void send_message(int socket, char *msg)
 void store_start_time()
 {
     // Store server start time.
-    if (gettimeofday(&start_time, NULL) == -1) {
+    if (gettimeofday(&start_time, NULL) == -1) 
+    {
         perror("gettimeofday error");
         exit(EXIT_FAILURE);
     }
@@ -285,12 +293,13 @@ void initialize_signal_handler()
     }
 }
 
-// signal handler to be called on receipt of (in this case) SIGTERM
+// signal handler to be called on receipt of SIGINT
 static void signal_handler(int sig, siginfo_t *siginfo, void *context)
 {
     // get "wall clock" time at end
     struct timeval end_time;
-    if (gettimeofday(&end_time, NULL) == -1) {
+    if (gettimeofday(&end_time, NULL) == -1) 
+    {
         perror("gettimeofday error");
         exit(EXIT_FAILURE);
     }
@@ -300,6 +309,7 @@ static void signal_handler(int sig, siginfo_t *siginfo, void *context)
 	   (double) (end_time.tv_usec - start_time.tv_usec) / 1000000 +
 	   (double) (end_time.tv_sec - start_time.tv_sec));
 
+    // Bye!
     printf("Exiting...\n");
     exit(EXIT_FAILURE);
 }

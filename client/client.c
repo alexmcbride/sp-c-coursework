@@ -20,7 +20,7 @@
 #define HOST_ADDRESS "127.0.0.1"
 #define INPUTSIZ 256
 
-// Prototypes
+// Function declarations
 void handle_server(int sockfd);
 void send_request(int sockfd, int request_code);
 void get_message(int sockfd);
@@ -91,27 +91,27 @@ void handle_server(int sockfd)
         int input = show_menu();
         switch (input) {
             case REQUEST_STUDENT_ID:
-            send_request(sockfd, REQUEST_STUDENT_ID);
-            get_message(sockfd);
+                send_request(sockfd, REQUEST_STUDENT_ID);
+                get_message(sockfd);
             break;
             case REQUEST_TIME:
-            send_request(sockfd, REQUEST_TIME);
-            get_message(sockfd);
+                send_request(sockfd, REQUEST_TIME);
+                get_message(sockfd);
             break;
             case REQUEST_UNAME:
-            send_request(sockfd, REQUEST_UNAME);
-            get_uname(sockfd);
+                send_request(sockfd, REQUEST_UNAME);
+                get_uname(sockfd);
             break;
             case REQUEST_FILE_LIST:
-            send_request(sockfd, REQUEST_FILE_LIST);
-            get_file_list(sockfd);
+                send_request(sockfd, REQUEST_FILE_LIST);
+                get_file_list(sockfd);
             break;
             case REQUEST_QUIT:
-            printf("Now exiting!\n");
-            running = 0;
+                printf("Now exiting!\n");
+                running = 0;
             break;
             default:
-            fprintf(stderr, "%s", "Error - invalid input\n");
+                fprintf(stderr, "%s", "Error - invalid input\n");
             break;
         }
     }

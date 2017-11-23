@@ -2,7 +2,7 @@
 
 void die(char *message) 
 {
-	puts(message);
+	perror(message);
 	exit(EXIT_FAILURE);
 }
 
