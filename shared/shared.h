@@ -12,7 +12,8 @@
 #define REQUEST_STUDENT_ID 1
 #define REQUEST_TIME 2
 #define REQUEST_UNAME 3
-#define REQUEST_QUIT 4
+#define REQUEST_FILE_LIST 4
+#define REQUEST_QUIT 5
 
 void die(char *message);
 size_t read_socket(int sockfd, unsigned char *buffer, int length);

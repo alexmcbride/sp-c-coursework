@@ -16,18 +16,24 @@
 #include <signal.h>
 #include <time.h>
 #include <sys/time.h>
+#include <sys/stat.h>
+#include <dirent.h>
 #include "../shared/rdwrn.h"
 #include "../shared/shared.h"
 
 // Constants
 #define STUDENT_ID "S1715224"
+#define UPLOAD_DIR "upload/"
 
 // Prototypes
 void *client_handler(void *);
 void handle_student_id(int connfd);
 void handle_server_time(int connfd);
+void handle_uname(int connfd);
+void handle_file_list(int connfd);
 void send_message(int socket, char *msg);
 void get_ip_address(char *ip_str);
+void store_start_time();
 void initialize_signal_handler();
 static void signal_handler(int sig, siginfo_t *siginfo, void *context);
 
@@ -39,11 +45,7 @@ int main(void)
 {
     int listenfd = 0, connfd = 0;
 
-    // Store server start time.
-    if (gettimeofday(&start_time, NULL) == -1) {
-        perror("gettimeofday error");
-        exit(EXIT_FAILURE);
-    }
+    store_start_time();
 
     struct sockaddr_in serv_addr;
     struct sockaddr_in client_addr;
@@ -154,6 +156,61 @@ void handle_uname(int connfd)
     write_socket(connfd, (unsigned char *)&uts, sizeof(struct utsname));
 }
 
+// https://stackoverflow.com/questions/4553012/checking-if-a-file-is-a-directory-or-just-a-file
+int filter_dir(const struct dirent *e)
+{
+    struct stat st;
+
+    stat(e->d_name, &st);
+    return !(st.st_mode & S_IFDIR);
+}
+
+void handle_file_list(int socket)
+{
+    // check "upload" directory exists
+    // if not create it
+    // else get list of files
+    // concat str
+    // send string to
+    struct stat st;
+    memset(&st, 0, sizeof(struct stat));
+    if (stat(UPLOAD_DIR, &st) == -1)
+    {
+        mkdir(UPLOAD_DIR, 0744);
+        printf("Created upload directory\n");
+    }
+
+    struct dirent **namelist;
+    int n;
+    if ((n = scandir(UPLOAD_DIR, &namelist, filter_dir, alphasort)) == -1)
+    {
+        die("Error - scandir");
+    }
+    else
+    {
+        printf("n: %d\n", n);
+
+        // Send total number of files
+        writen(socket, (unsigned char *)&n, sizeof(int));
+
+        while (n--)
+        {
+            // Get length of name string (d_name ends with NULL char).
+            int length = strlen(namelist[n]->d_name);
+            writen(socket, (unsigned char *) &length, sizeof(int));
+            writen(socket, (unsigned char *) namelist[n]->d_name, length);
+
+            printf("%s\n", namelist[n]->d_name);
+
+            free(namelist[n]);
+        }
+
+
+
+        free(namelist);
+    }
+}
+
 void *client_handler(void *socket_desc)
 {
     int connfd = *(int *) socket_desc;
@@ -190,6 +247,9 @@ void *client_handler(void *socket_desc)
             case REQUEST_UNAME:
             handle_uname(connfd);
             break;
+            case REQUEST_FILE_LIST:
+            handle_file_list(connfd);
+            break;
         }
     }
 
@@ -207,6 +267,15 @@ void send_message(int socket, char *msg)
     size_t length = strlen(msg) + 1; // Add one to account for NULL terminator
     writen(socket, (unsigned char *) &length, sizeof(size_t));
     writen(socket, (unsigned char *) msg, length);
+}
+
+void store_start_time()
+{
+    // Store server start time.
+    if (gettimeofday(&start_time, NULL) == -1) {
+        perror("gettimeofday error");
+        exit(EXIT_FAILURE);
+    }
 }
 
 void initialize_signal_handler()
@@ -229,9 +298,8 @@ void initialize_signal_handler()
 // signal handler to be called on receipt of (in this case) SIGTERM
 static void signal_handler(int sig, siginfo_t *siginfo, void *context)
 {
-    struct timeval end_time;
-
     // get "wall clock" time at end
+    struct timeval end_time;
     if (gettimeofday(&end_time, NULL) == -1) {
         perror("gettimeofday error");
         exit(EXIT_FAILURE);
