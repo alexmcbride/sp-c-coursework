@@ -152,7 +152,7 @@ void get_file_list(int sockfd)
     int total_files;
     read_socket(sockfd, (unsigned char *) &total_files, sizeof(int));
 
-    printf("Total files: %d\n", total_files);
+    printf(">> List of server files (%d)\n", total_files);
 
     if (total_files == 0)
     {
@@ -162,13 +162,13 @@ void get_file_list(int sockfd)
     {
         for (int i = 0; i < total_files; i++)
         {
-            size_t length;
+            int length;
             char filename[NAME_MAX]; // max size of file name
 
-            read_socket(sockfd, (unsigned char *) &length, sizeof(size_t));
+            read_socket(sockfd, (unsigned char *) &length, sizeof(int));
             read_socket(sockfd, (unsigned char *) filename, length);
 
-            printf(">> %d - %s", (i + 1), filename);
+            printf(">> %d - %s\n", (i + 1), filename);
         }
     }
 }

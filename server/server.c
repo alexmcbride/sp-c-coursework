@@ -156,22 +156,15 @@ void handle_uname(int connfd)
     write_socket(connfd, (unsigned char *)&uts, sizeof(struct utsname));
 }
 
-// https://stackoverflow.com/questions/4553012/checking-if-a-file-is-a-directory-or-just-a-file
 int filter_dir(const struct dirent *e)
 {
-    struct stat st;
-
-    stat(e->d_name, &st);
-    return !(st.st_mode & S_IFDIR);
+    // Supported in Linux Mint, but not every Linux file system.
+    return e->d_type == DT_REG;
 }
 
 void handle_file_list(int socket)
 {
-    // check "upload" directory exists
-    // if not create it
-    // else get list of files
-    // concat str
-    // send string to
+    // Create upload directory if it doesn't exist.
     struct stat st;
     memset(&st, 0, sizeof(struct stat));
     if (stat(UPLOAD_DIR, &st) == -1)
@@ -180,6 +173,7 @@ void handle_file_list(int socket)
         printf("Created upload directory\n");
     }
 
+    // Scan upload directory.
     struct dirent **namelist;
     int n;
     if ((n = scandir(UPLOAD_DIR, &namelist, filter_dir, alphasort)) == -1)
@@ -188,25 +182,21 @@ void handle_file_list(int socket)
     }
     else
     {
-        printf("n: %d\n", n);
-
-        // Send total number of files
+        // Send total number of files first
         writen(socket, (unsigned char *)&n, sizeof(int));
 
+        // Send each filename, prepended with its length
         while (n--)
         {
-            // Get length of name string (d_name ends with NULL char).
             int length = strlen(namelist[n]->d_name);
             writen(socket, (unsigned char *) &length, sizeof(int));
             writen(socket, (unsigned char *) namelist[n]->d_name, length);
 
-            printf("%s\n", namelist[n]->d_name);
-
+            // Free dirent struct.
             free(namelist[n]);
         }
 
-
-
+        // Free file array.
         free(namelist);
     }
 }
@@ -223,14 +213,14 @@ void *client_handler(void *socket_desc)
         int request_code;
         int count = readn(connfd, (unsigned char *) &request_code, sizeof(int));
 
-        // Check if client disconnected.
         if (count == 0)
         {
-            printf("Error - lost client connection\n");
+            // Client disconnected
             break;
         }
         else if (count < 0)
         {
+            // Error
             printf("Error - client read error: %d\n", count);
             break;
         }
@@ -291,7 +281,7 @@ void initialize_signal_handler()
 
     if (sigaction(SIGINT, &act, NULL) == -1)
     {
-        die("sigaction failed");
+        die("Error - sigaction failed");
     }
 }
 
@@ -306,10 +296,10 @@ static void signal_handler(int sig, siginfo_t *siginfo, void *context)
     }
 
     // in microseconds...
-    printf("Total execution time = %f seconds\n",
+    printf("\nTotal execution time: %f seconds\n",
 	   (double) (end_time.tv_usec - start_time.tv_usec) / 1000000 +
 	   (double) (end_time.tv_sec - start_time.tv_sec));
 
-    printf("PID: %ld, UID: %ld\n", (long) siginfo->si_pid, (long) siginfo->si_uid);
+    printf("Exiting...\n");
     exit(EXIT_FAILURE);
 }
