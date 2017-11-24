@@ -26,6 +26,8 @@ void send_request(int sockfd, int request_code);
 void get_message(int sockfd);
 void get_uname(int sockfd);
 void get_file_list(int sockdf);
+void request_file_transfer(int sockfd);
+void get_file_transfer(int sockfd);
 
 // Functions
 int main(void)
@@ -70,7 +72,8 @@ int show_menu()
     printf("2. Get server time\n");
     printf("3. Get uname info\n");
     printf("4. Get file list\n");
-    printf("5. Quit\n");
+    printf("5. Get file transfer\n");
+    printf("6. Quit\n");
     printf("Choose option: ");
 
     int input;
@@ -105,6 +108,10 @@ void handle_server(int sockfd)
             case REQUEST_FILE_LIST:
                 send_request(sockfd, REQUEST_FILE_LIST);
                 get_file_list(sockfd);
+            break;
+            case REQUEST_FILE_TRANSFER:
+                request_file_transfer(sockfd);
+                get_file_transfer(sockfd);
             break;
             case REQUEST_QUIT:
                 printf("Now exiting!\n");
@@ -171,4 +178,22 @@ void get_file_list(int sockfd)
             printf(">> %d - %s\n", (i + 1), filename);
         }
     }
+}
+
+void request_file_transfer(int sockfd)
+{
+    char filename[256];
+
+    printf("Enter filename: ");
+    scanf("%255s", filename);
+
+    send_request(sockfd, REQUEST_FILE_TRANSFER);
+    send_message(sockfd, filename);
+}
+
+void get_file_transfer(int sockfd)
+{
+    // first is int saying status of transfer
+    // next int saying size of file in bytes
+    // next is file data
 }

@@ -1,6 +1,6 @@
 #include "shared.h"
 
-void die(char *message) 
+void die(char *message)
 {
 	perror(message);
 	exit(EXIT_FAILURE);
@@ -20,10 +20,10 @@ size_t write_socket(int sockfd, unsigned char *buffer, int length)
 	return result;
 }
 
-size_t read_socket(int sockfd, unsigned char *buffer, int length) 
+size_t read_socket(int sockfd, unsigned char *buffer, int length)
 {
 	int result = readn(sockfd, (unsigned char *)buffer, length);
-	if (result == 0) 
+	if (result == 0)
 	{
 		close(sockfd);
 		die("Error - connection lost");
@@ -37,4 +37,11 @@ size_t read_socket(int sockfd, unsigned char *buffer, int length)
 		die(error);
 	}
 	return result;
+}
+
+void send_message(int socket, char *msg)
+{
+    size_t length = strlen(msg) + 1; // Add one to account for NULL terminator
+    writen(socket, (unsigned char *) &length, sizeof(size_t));
+    writen(socket, (unsigned char *) msg, length);
 }

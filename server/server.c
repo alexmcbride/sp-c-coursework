@@ -31,12 +31,13 @@ void handle_student_id(int connfd);
 void handle_server_time(int connfd);
 void handle_uname(int connfd);
 void handle_file_list(int connfd);
+void handle_file_transfer(int connfd);
 int filter_dir(const struct dirent *e);
-void send_message(int socket, char *msg);
 void get_ip_address(char *ip_str);
 void store_start_time();
 void initialize_signal_handler();
 static void signal_handler(int sig, siginfo_t *siginfo, void *context);
+void get_message(int connfd, char *msg);
 
 // Global variable
 static struct timeval start_time;
@@ -79,7 +80,7 @@ int main(void)
 
         pthread_t sniffer_thread;
         // third parameter is a pointer to the thread function, fourth is its actual parameter
-        if (pthread_create(&sniffer_thread, NULL, client_handler, (void *) &connfd) < 0) 
+        if (pthread_create(&sniffer_thread, NULL, client_handler, (void *) &connfd) < 0)
         {
             die("Error - could not create thread");
         }
@@ -132,14 +133,14 @@ void handle_server_time(int connfd)
 {
     // Get time.
     time_t t;
-    if ((t = time(NULL)) == -1) 
+    if ((t = time(NULL)) == -1)
     {
         die("Error - could not get time");
     }
 
     // Convert to local time.
     struct tm *tm;
-    if ((tm = localtime(&t)) == NULL) 
+    if ((tm = localtime(&t)) == NULL)
     {
         die("Error - could not get localtime");
     }
@@ -208,6 +209,25 @@ void handle_file_list(int socket)
     }
 }
 
+void handle_file_transfer(int sockfd)
+{
+    char filename[NAME_MAX];
+    get_message(sockfd, filename);
+
+    printf("Request: %s\n", filename);
+
+    // check filename exists
+    // if not sent file status back to
+    // otherwise start transfer
+}
+
+void get_message(int sockfd, char *message)
+{
+    size_t length;
+    read_socket(sockfd, (unsigned char *) &length, sizeof(size_t));
+    read_socket(sockfd, (unsigned char *) message, length);
+}
+
 void *client_handler(void *socket_desc)
 {
     int connfd = *(int *) socket_desc;
@@ -247,6 +267,9 @@ void *client_handler(void *socket_desc)
             case REQUEST_FILE_LIST:
                 handle_file_list(connfd);
             break;
+            case REQUEST_FILE_TRANSFER:
+                handle_file_transfer(connfd);
+            break;
         }
     }
 
@@ -259,17 +282,10 @@ void *client_handler(void *socket_desc)
     return 0;
 }
 
-void send_message(int socket, char *msg)
-{
-    size_t length = strlen(msg) + 1; // Add one to account for NULL terminator
-    writen(socket, (unsigned char *) &length, sizeof(size_t));
-    writen(socket, (unsigned char *) msg, length);
-}
-
 void store_start_time()
 {
     // Store server start time.
-    if (gettimeofday(&start_time, NULL) == -1) 
+    if (gettimeofday(&start_time, NULL) == -1)
     {
         perror("gettimeofday error");
         exit(EXIT_FAILURE);
@@ -298,7 +314,7 @@ static void signal_handler(int sig, siginfo_t *siginfo, void *context)
 {
     // get "wall clock" time at end
     struct timeval end_time;
-    if (gettimeofday(&end_time, NULL) == -1) 
+    if (gettimeofday(&end_time, NULL) == -1)
     {
         perror("gettimeofday error");
         exit(EXIT_FAILURE);
