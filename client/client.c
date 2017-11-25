@@ -18,12 +18,11 @@
 
 // Constants
 #define HOST_ADDRESS "127.0.0.1"
-#define INPUTSIZ 256
 
 // Function declarations
 void handle_server(int sockfd);
 void send_request(int sockfd, int request_code);
-void get_message(int sockfd);
+void get_and_display_message(int sockfd);
 void get_uname(int sockfd);
 void get_file_list(int sockdf);
 void request_file_transfer(int sockfd);
@@ -85,7 +84,7 @@ int show_menu()
 void handle_server(int sockfd)
 {
     // get welcome message from the server
-    get_message(sockfd);
+    get_and_display_message(sockfd);
 
     // show menu and have user select option
     int running = 1;
@@ -95,11 +94,11 @@ void handle_server(int sockfd)
         switch (input) {
             case REQUEST_STUDENT_ID:
                 send_request(sockfd, REQUEST_STUDENT_ID);
-                get_message(sockfd);
+                get_and_display_message(sockfd);
             break;
             case REQUEST_TIME:
                 send_request(sockfd, REQUEST_TIME);
-                get_message(sockfd);
+                get_and_display_message(sockfd);
             break;
             case REQUEST_UNAME:
                 send_request(sockfd, REQUEST_UNAME);
@@ -129,13 +128,11 @@ void send_request(int sockfd, int request_code)
     write_socket(sockfd, (unsigned char *)&request_code, sizeof(int));
 }
 
-void get_message(int sockfd)
+void get_and_display_message(int sockfd)
 {
-    size_t length;
     char message[INPUTSIZ];
 
-    read_socket(sockfd, (unsigned char *) &length, sizeof(size_t));
-    read_socket(sockfd, (unsigned char *) message, length);
+    get_message(sockfd, message);
 
     printf(">> %s\n", message);
 }
@@ -159,30 +156,20 @@ void get_file_list(int sockfd)
     int total_files;
     read_socket(sockfd, (unsigned char *) &total_files, sizeof(int));
 
-    printf(">> List of server files (%d)\n", total_files);
+    printf(">> List of server files (%d):\n", total_files);
 
-    if (total_files == 0)
+
+    for (int i = 0; i < total_files; i++)
     {
-        printf(">> Directory contains no files\n");
-    }
-    else
-    {
-        for (int i = 0; i < total_files; i++)
-        {
-            int length;
-            char filename[NAME_MAX]; // max size of file name
-
-            read_socket(sockfd, (unsigned char *) &length, sizeof(int));
-            read_socket(sockfd, (unsigned char *) filename, length);
-
-            printf(">> %d - %s\n", (i + 1), filename);
-        }
+        char filename[NAME_MAX]; // max size of file name
+        get_message(sockfd, filename);
+        printf(">> %d - %s\n", (i + 1), filename);
     }
 }
 
 void request_file_transfer(int sockfd)
 {
-    char filename[256];
+    char filename[INPUTSIZ];
 
     printf("Enter filename: ");
     scanf("%255s", filename);

@@ -39,9 +39,16 @@ size_t read_socket(int sockfd, unsigned char *buffer, int length)
 	return result;
 }
 
-void send_message(int socket, char *msg)
+void send_message(int socket, char *message)
 {
-    size_t length = strlen(msg) + 1; // Add one to account for NULL terminator
+    size_t length = strlen(message) + 1; // Add one to account for NULL terminator
     writen(socket, (unsigned char *) &length, sizeof(size_t));
-    writen(socket, (unsigned char *) msg, length);
+    writen(socket, (unsigned char *) message, length);
+}
+
+void get_message(int sockfd, char *message)
+{
+    size_t length;
+    read_socket(sockfd, (unsigned char *) &length, sizeof(size_t));
+    read_socket(sockfd, (unsigned char *) message, length);
 }

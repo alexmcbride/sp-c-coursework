@@ -9,6 +9,7 @@
 
 #define PORT_NUMBER 50031
 #define ERR_MSG_SIZE 64
+#define INPUTSIZ 256
 
 #define REQUEST_STUDENT_ID 1
 #define REQUEST_TIME 2
@@ -20,6 +21,7 @@
 void die(char *message);
 size_t read_socket(int sockfd, unsigned char *buffer, int length);
 size_t write_socket(int sockfd, unsigned char *buffer, int length);
-void send_message(int socket, char *msg);
+void send_message(int socket, char *message);
+void get_message(int socket, char *message);
 
 #endif

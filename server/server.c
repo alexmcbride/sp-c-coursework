@@ -37,7 +37,6 @@ void get_ip_address(char *ip_str);
 void store_start_time();
 void initialize_signal_handler();
 static void signal_handler(int sig, siginfo_t *siginfo, void *context);
-void get_message(int connfd, char *msg);
 
 // Global variable
 static struct timeval start_time;
@@ -193,12 +192,10 @@ void handle_file_list(int socket)
         // Send total number of files first
         writen(socket, (unsigned char *)&n, sizeof(int));
 
-        // Send each filename, prepended with its length
+        // Send each filename to the client.
         while (n--)
         {
-            int length = strlen(namelist[n]->d_name);
-            writen(socket, (unsigned char *) &length, sizeof(int));
-            writen(socket, (unsigned char *) namelist[n]->d_name, length);
+            send_message(socket, namelist[n]->d_name);
 
             // Free dirent struct.
             free(namelist[n]);
@@ -219,13 +216,6 @@ void handle_file_transfer(int sockfd)
     // check filename exists
     // if not sent file status back to
     // otherwise start transfer
-}
-
-void get_message(int sockfd, char *message)
-{
-    size_t length;
-    read_socket(sockfd, (unsigned char *) &length, sizeof(size_t));
-    read_socket(sockfd, (unsigned char *) message, length);
 }
 
 void *client_handler(void *socket_desc)
