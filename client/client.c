@@ -25,8 +25,8 @@ void send_request(int sockfd, int request_code);
 void get_and_display_message(int sockfd);
 void get_uname(int sockfd);
 void get_file_list(int sockdf);
-void request_file_transfer(int sockfd);
-void get_file_transfer(int sockfd);
+void request_file_transfer(int sockfd, char *filename);
+void get_file_transfer(int sockfd, char *filename);
 
 // Functions
 int main(void)
@@ -83,6 +83,8 @@ int show_menu()
 
 void handle_server(int sockfd)
 {
+    char filename[INPUTSIZ];    
+
     // get welcome message from the server
     get_and_display_message(sockfd);
 
@@ -109,8 +111,8 @@ void handle_server(int sockfd)
                 get_file_list(sockfd);
             break;
             case REQUEST_FILE_TRANSFER:
-                request_file_transfer(sockfd);
-                get_file_transfer(sockfd);
+                request_file_transfer(sockfd, filename);
+                get_file_transfer(sockfd, filename);
             break;
             case REQUEST_QUIT:
                 printf("Now exiting!\n");
@@ -167,10 +169,8 @@ void get_file_list(int sockfd)
     }
 }
 
-void request_file_transfer(int sockfd)
+void request_file_transfer(int sockfd, char *filename)
 {
-    char filename[INPUTSIZ];
-
     printf("Enter filename: ");
     scanf("%255s", filename);
 
@@ -178,9 +178,31 @@ void request_file_transfer(int sockfd)
     send_message(sockfd, filename);
 }
 
-void get_file_transfer(int sockfd)
+void get_file_transfer(int sockfd, char *filename)
 {
     // first is int saying status of transfer
     // next int saying size of file in bytes
     // next is file data
+
+    int file_status;
+    read_socket(sockfd, (unsigned char *) &file_status, sizeof(int));
+
+    switch (file_status)
+    {
+        case FILE_NOT_FOUND:
+            printf("Error - file '%s' not on server\n", filename);
+        break;
+        case FILE_PERMISSION_ERROR:
+            printf("Error - file '%s' cannot be read\n", filename);
+        break;
+        case FILE_OK:
+            printf("Starting transfer of: %s\n", filename);
+
+            // Get size of file
+            // transfer
+        break;
+        default:
+            puts("Error - unknown response");
+        break;
+    }
 }

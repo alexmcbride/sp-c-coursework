@@ -213,6 +213,9 @@ void handle_file_transfer(int sockfd)
 
     printf("Request: %s\n", filename);
 
+    int status = FILE_OK;
+    write_socket(sockfd, (unsigned char *)&status, sizeof(int));
+
     // check filename exists
     // if not sent file status back to
     // otherwise start transfer

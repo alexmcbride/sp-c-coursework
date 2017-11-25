@@ -18,6 +18,10 @@
 #define REQUEST_FILE_TRANSFER 5
 #define REQUEST_QUIT 6
 
+#define FILE_NOT_FOUND 1
+#define FILE_PERMISSION_ERROR 2
+#define FILE_OK 3
+
 void die(char *message);
 size_t read_socket(int sockfd, unsigned char *buffer, int length);
 size_t write_socket(int sockfd, unsigned char *buffer, int length);
