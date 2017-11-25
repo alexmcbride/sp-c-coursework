@@ -38,13 +38,14 @@ void store_start_time();
 void initialize_signal_handler();
 static void signal_handler(int sig, siginfo_t *siginfo, void *context);
 
-// Global variable
-static struct timeval start_time;
+// Global variables
+static struct timeval start_time; // server start time
+static int listenfd; // listen socket
 
 // Functions
 int main(void)
 {
-    int listenfd = 0, connfd = 0;
+    int connfd = 0;
 
     store_start_time();
 
@@ -93,6 +94,7 @@ int main(void)
     // ** should include a signal handler to clean up
     // shutdown(listenfd, SHUT_RDWR);
     // close(listenfd);
+
     exit(EXIT_SUCCESS);
 }
 
@@ -305,6 +307,10 @@ void initialize_signal_handler()
 // signal handler to be called on receipt of SIGINT
 static void signal_handler(int sig, siginfo_t *siginfo, void *context)
 {
+    // Shutdown and close listen socket
+    shutdown(listenfd, SHUT_RDWR);
+    close(listenfd);
+
     // get "wall clock" time at end
     struct timeval end_time;
     if (gettimeofday(&end_time, NULL) == -1)
@@ -320,5 +326,6 @@ static void signal_handler(int sig, siginfo_t *siginfo, void *context)
 
     // Bye!
     printf("Exiting...\n");
+
     exit(EXIT_FAILURE);
 }
