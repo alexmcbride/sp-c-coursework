@@ -18,6 +18,8 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <sys/sendfile.h>
+#include <fcntl.h>
 #include "../shared/rdwrn.h"
 #include "../shared/shared.h"
 
@@ -210,17 +212,54 @@ void handle_file_list(int socket)
 
 void handle_file_transfer(int sockfd)
 {
+    int status = 0;
+
     char filename[NAME_MAX];
     get_message(sockfd, filename);
 
-    printf("Request: %s\n", filename);
+    // Create local file path
+    char local_path[NAME_MAX];
+    strcpy(local_path, UPLOAD_DIR);
+    strcat(local_path, filename);
 
-    int status = FILE_OK;
+    // Open file etc.
+    int fd = open(local_path, O_RDONLY);
+    if (fd == -1)
+    {
+        status = FILE_ERROR;
+        write_socket(sockfd, (unsigned char *)&status, sizeof(int));
+        send_message(sockfd, strerror(errno));
+        return;
+    }
+
+    // Get stat for file size
+    struct stat file_stat;
+    if (fstat(fd, &file_stat) < 0)
+    {
+        status = FILE_ERROR;
+        write_socket(sockfd, (unsigned char *)&status, sizeof(int));
+        send_message(sockfd, strerror(errno));
+        return;
+    }
+
+    // If we get to this point, we're good to go!
+    status = FILE_OK;
     write_socket(sockfd, (unsigned char *)&status, sizeof(int));
 
-    // check filename exists
-    // if not sent file status back to
-    // otherwise start transfer
+    // Send file size
+    int bytes_remaining = file_stat.st_size; // Get file size
+    write_socket(sockfd, (unsigned char *)&bytes_remaining, sizeof(int));
+
+    // Transfer file
+    off_t offset = 0;
+    int bytes_sent = 0;
+    while (((bytes_sent = sendfile(sockfd, fd, &offset, BUFSIZ)) > 0) && bytes_remaining > 0)
+    {
+        bytes_remaining += bytes_sent;
+    }
+
+    // Cleanup
+    close(fd);
 }
 
 void *client_handler(void *socket_desc)

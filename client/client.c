@@ -83,7 +83,7 @@ int show_menu()
 
 void handle_server(int sockfd)
 {
-    char filename[INPUTSIZ];    
+    char filename[INPUTSIZ];
 
     // get welcome message from the server
     get_and_display_message(sockfd);
@@ -180,26 +180,48 @@ void request_file_transfer(int sockfd, char *filename)
 
 void get_file_transfer(int sockfd, char *filename)
 {
-    // first is int saying status of transfer
-    // next int saying size of file in bytes
-    // next is file data
-
     int file_status;
-    read_socket(sockfd, (unsigned char *) &file_status, sizeof(int));
+    char error[INPUTSIZ];
+    char buffer[BUFSIZ];
+    int total_bytes;
+    int bytes_read;
+    FILE *file;
 
+    // First get file status, either OK or ERROR
+    read_socket(sockfd, (unsigned char *) &file_status, sizeof(int));
     switch (file_status)
     {
-        case FILE_NOT_FOUND:
-            printf("Error - file '%s' not on server\n", filename);
-        break;
-        case FILE_PERMISSION_ERROR:
-            printf("Error - file '%s' cannot be read\n", filename);
+        case FILE_ERROR:
+            // Get error message.
+            get_message(sockfd, error);
+            printf("Error '%s' - %s\n", filename, error);
         break;
         case FILE_OK:
-            printf("Starting transfer of: %s\n", filename);
+            // Get total size of file
+            read_socket(sockfd, (unsigned char *)&total_bytes, sizeof(int));
 
-            // Get size of file
-            // transfer
+            // Open file for writing on this side
+            file = fopen(filename, "w");
+            if (file == NULL)
+            {
+                die("Error - failed to open file");
+            }
+
+            // Transfer file
+            int remaining = total_bytes;
+            while (remaining > 0)
+            {
+                bytes_read = recv(sockfd, buffer, BUFSIZ, 0);
+                if (bytes_read > 0)
+                {
+                    // Write file
+                    fwrite(buffer, sizeof(char), bytes_read, file);
+                    remaining -= bytes_read;
+                    fprintf(stdout, "Transfered %d of %d bytes\n", bytes_read, total_bytes);
+                }
+            }
+
+            fclose(file);
         break;
         default:
             puts("Error - unknown response");

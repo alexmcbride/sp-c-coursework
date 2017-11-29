@@ -21,9 +21,8 @@
 #define REQUEST_QUIT 6
 
 // File status info sent from server to the client.
-#define FILE_NOT_FOUND 1
-#define FILE_PERMISSION_ERROR 2
-#define FILE_OK 3
+#define FILE_ERROR 1
+#define FILE_OK 2
 
 // Function declarations
 void die(char *message);
