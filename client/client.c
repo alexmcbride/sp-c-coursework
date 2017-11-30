@@ -179,15 +179,18 @@ int file_exists(char *filename)
 
 int request_file_transfer(int sockfd, char *filename)
 {
+    // Get filename from user
     printf("Enter filename: ");
     scanf("%255s", filename);
 
+    // Check file does not already exist on the client
     if (file_exists(filename))
     {
         printf("Error - file '%s' already exists\n", filename);
         return 0;
     }
 
+    // Request server sends this file
     send_request(sockfd, REQUEST_FILE_TRANSFER);
     send_message(sockfd, filename);
 
@@ -205,6 +208,7 @@ void get_file_transfer(int sockfd, char *filename)
 
     // First get file status, either OK or ERROR
     read_socket(sockfd, (unsigned char *) &file_status, sizeof(int));
+
     switch (file_status)
     {
         case FILE_ERROR:
@@ -213,7 +217,7 @@ void get_file_transfer(int sockfd, char *filename)
             printf(">> Error '%s' - %s\n", filename, error);
         break;
         case FILE_OK:
-            // Get total size of file
+            // Get total size of file to send
             read_socket(sockfd, (unsigned char *)&total_bytes, sizeof(int));
 
             // Open file for writing on this side
@@ -226,23 +230,23 @@ void get_file_transfer(int sockfd, char *filename)
             // Transfer file
             fprintf(stdout, ">> File transfer started...\n");
 
-            int remaining = total_bytes;
-            while (remaining > 0)
+            // Keep looping until read all bytes
+            int bytes_remaining = total_bytes;
+            while (bytes_remaining > 0)
             {
+                // Read bytes from socket.
                 bytes_read = recv(sockfd, buffer, BUFSIZ, 0);
                 if (bytes_read > 0)
                 {
-                    // Write file
+                    // Write bytes to local file
                     fwrite(buffer, sizeof(char), bytes_read, file);
-                    remaining -= bytes_read;
-
-                    // Output message
-                    fprintf(stdout, ">> Transfered %d of %d bytes\n", total_bytes - remaining, total_bytes);
+                    bytes_remaining -= bytes_read;
+                    fprintf(stdout, ">> Transfered %d of %d bytes\n", total_bytes - bytes_remaining, total_bytes);
                 }
             }
 
+            // Cleanup
             fclose(file);
-
             fprintf(stdout, ">> File transfer complete!\n");
         break;
         default:

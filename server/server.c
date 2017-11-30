@@ -273,7 +273,6 @@ void *client_handler(void *socket_desc)
     {
         int request_code;
         int count = readn(connfd, (unsigned char *) &request_code, sizeof(int));
-
         if (count == 0)
         {
             // Client disconnected
@@ -304,6 +303,9 @@ void *client_handler(void *socket_desc)
             case REQUEST_FILE_TRANSFER:
                 handle_file_transfer(connfd);
             break;
+            default:
+                printf("Error - unknown request\n");
+            break;
         }
     }
 
@@ -329,12 +331,8 @@ void store_start_time()
 void initialize_signal_handler()
 {
     struct sigaction act;
-    memset(&act, '\0', sizeof(act));
-
-    // this is a pointer to a function
+    memset(&act, 0, sizeof(act));
     act.sa_sigaction = &signal_handler;
-
-    // the SA_SIGINFO flag tells sigaction() to use the sa_sigaction field, not sa_handler
     act.sa_flags = SA_SIGINFO;
 
     if (sigaction(SIGINT, &act, NULL) == -1)
