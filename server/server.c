@@ -20,7 +20,6 @@
 #include <dirent.h>
 #include <sys/sendfile.h>
 #include <fcntl.h>
-#include "../shared/rdwrn.h"
 #include "../shared/shared.h"
 
 // Constants
@@ -167,6 +166,7 @@ void handle_uname(int connfd)
     write_socket(connfd, (unsigned char *)&uts, sizeof(struct utsname));
 }
 
+// Filter scandir to show only regular files
 int filter_dir(const struct dirent *e)
 {
     // Supported in Linux Mint, but not every Linux file system.

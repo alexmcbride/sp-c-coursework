@@ -13,7 +13,7 @@
 #include <arpa/inet.h>
 #include <sys/utsname.h>
 #include <limits.h>
-#include "../shared/rdwrn.h"
+#include <sys/stat.h>
 #include "../shared/shared.h"
 
 // Constants
@@ -25,7 +25,8 @@ void send_request(int sockfd, int request_code);
 void get_and_display_message(int sockfd);
 void get_uname(int sockfd);
 void get_file_list(int sockdf);
-void request_file_transfer(int sockfd, char *filename);
+int file_exists(char *filename);
+int request_file_transfer(int sockfd, char *filename);
 void get_file_transfer(int sockfd, char *filename);
 
 // Functions
@@ -111,8 +112,10 @@ void handle_server(int sockfd)
                 get_file_list(sockfd);
             break;
             case REQUEST_FILE_TRANSFER:
-                request_file_transfer(sockfd, filename);
-                get_file_transfer(sockfd, filename);
+                if (request_file_transfer(sockfd, filename))
+                {
+                    get_file_transfer(sockfd, filename);
+                }
             break;
             case REQUEST_QUIT:
                 printf("Now exiting!\n");
@@ -160,22 +163,35 @@ void get_file_list(int sockfd)
 
     printf(">> List of server files (%d):\n", total_files);
 
-
     for (int i = 0; i < total_files; i++)
     {
         char filename[NAME_MAX]; // max size of file name
         get_message(sockfd, filename);
-        printf(">> %d - %s\n", (i + 1), filename);
+        printf(">> %s\n", filename);
     }
 }
 
-void request_file_transfer(int sockfd, char *filename)
+int file_exists(char *filename)
+{
+    struct stat buffer;
+    return (stat (filename, &buffer) == 0);
+}
+
+int request_file_transfer(int sockfd, char *filename)
 {
     printf("Enter filename: ");
     scanf("%255s", filename);
 
+    if (file_exists(filename))
+    {
+        printf("Error - file '%s' already exists\n", filename);
+        return 0;
+    }
+
     send_request(sockfd, REQUEST_FILE_TRANSFER);
     send_message(sockfd, filename);
+
+    return 1;
 }
 
 void get_file_transfer(int sockfd, char *filename)
@@ -194,7 +210,7 @@ void get_file_transfer(int sockfd, char *filename)
         case FILE_ERROR:
             // Get error message.
             get_message(sockfd, error);
-            printf("Error '%s' - %s\n", filename, error);
+            printf(">> Error '%s' - %s\n", filename, error);
         break;
         case FILE_OK:
             // Get total size of file
@@ -208,6 +224,8 @@ void get_file_transfer(int sockfd, char *filename)
             }
 
             // Transfer file
+            fprintf(stdout, ">> File transfer started...\n");
+
             int remaining = total_bytes;
             while (remaining > 0)
             {
@@ -217,11 +235,15 @@ void get_file_transfer(int sockfd, char *filename)
                     // Write file
                     fwrite(buffer, sizeof(char), bytes_read, file);
                     remaining -= bytes_read;
-                    fprintf(stdout, "Transfered %d of %d bytes\n", bytes_read, total_bytes);
+
+                    // Output message
+                    fprintf(stdout, ">> Transfered %d of %d bytes\n", total_bytes - remaining, total_bytes);
                 }
             }
 
             fclose(file);
+
+            fprintf(stdout, ">> File transfer complete!\n");
         break;
         default:
             puts("Error - unknown response");
