@@ -76,6 +76,7 @@ int show_menu()
     printf("6. Quit\n");
     printf("Choose option: ");
 
+    // TODO: sort this out...
     int input;
     scanf("%d", &input);
 
@@ -238,6 +239,7 @@ void get_file_transfer(int sockfd, char *filename)
                     // Write bytes to local file
                     fwrite(buffer, sizeof(char), bytes_read, file);
                     bytes_remaining -= bytes_read;
+                    // float percentage = (bytes_remaining / total_bytes) * 100.0;
                     fprintf(stdout, ">> Transfered %d of %d bytes\n", total_bytes - bytes_remaining, total_bytes);
                 }
             }
