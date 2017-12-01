@@ -227,9 +227,6 @@ void get_file_transfer(int sockfd, char *filename)
                 die("Error - failed to open file");
             }
 
-            // Transfer file
-            fprintf(stdout, ">> File transfer started...\n");
-
             // Keep looping until read all bytes
             int bytes_remaining = total_bytes;
             while (bytes_remaining > 0)
@@ -247,7 +244,7 @@ void get_file_transfer(int sockfd, char *filename)
 
             // Cleanup
             fclose(file);
-            fprintf(stdout, ">> File transfer complete!\n");
+            fprintf(stdout, ">> File transfer of complete!\n");
         break;
         default:
             puts("Error - unknown response");
