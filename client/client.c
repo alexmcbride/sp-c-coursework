@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <ctype.h>
 #include <arpa/inet.h>
 #include <sys/utsname.h>
 #include <limits.h>
@@ -76,11 +77,16 @@ int show_menu()
     printf("6. Quit\n");
     printf("Choose option: ");
 
-    // TODO: sort this out...
     int input;
-    scanf("%d", &input);
+    char input_str[INPUTSIZ];
+    fgets(input_str, sizeof(input_str), stdin);
+    
+    if (sscanf(input_str, "%d", &input))
+    {
+        return input;
+    }
 
-    return input;
+    return -1;
 }
 
 void handle_server(int sockfd)
@@ -246,7 +252,7 @@ void get_file_transfer(int sockfd, char *filename)
 
             // Cleanup
             fclose(file);
-            fprintf(stdout, ">> File transfer of complete!\n");
+            fprintf(stdout, ">> File transfer of '%s' complete!\n", filename);
         break;
         default:
             puts("Error - unknown response");
