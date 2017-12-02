@@ -241,6 +241,10 @@ void get_file_transfer(int sockfd, char *filename)
                     // float percentage = (bytes_remaining / total_bytes) * 100.0;
                     printf(">> Transfered %d of %d bytes\n", total_bytes - bytes_remaining, total_bytes);
                 }
+                else
+                {
+                    break;
+                }
             }
 
             // Cleanup
