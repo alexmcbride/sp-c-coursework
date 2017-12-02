@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
-#include <ctype.h>
 #include <arpa/inet.h>
 #include <sys/utsname.h>
 #include <limits.h>
@@ -77,10 +76,12 @@ int show_menu()
     printf("6. Quit\n");
     printf("Choose option: ");
 
-    int input;
+    // Get input from user.
     char input_str[INPUTSIZ];
     fgets(input_str, sizeof(input_str), stdin);
-    
+
+    // Convert input to int.
+    int input;
     if (sscanf(input_str, "%d", &input))
     {
         return input;

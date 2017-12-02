@@ -253,9 +253,13 @@ void handle_file_transfer(int sockfd)
     // Transfer file
     off_t offset = 0;
     int bytes_sent = 0;
-    while (((bytes_sent = sendfile(sockfd, fd, &offset, BUFSIZ)) > 0) && bytes_remaining > 0)
+    while (bytes_remaining > 0)
     {
-        bytes_remaining += bytes_sent;
+        bytes_sent = sendfile(sockfd, fd, &offset, BUFSIZ);
+        if (bytes_sent > 0)
+        {
+            bytes_remaining += bytes_sent;
+        }
     }
 
     // Cleanup
