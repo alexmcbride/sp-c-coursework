@@ -25,7 +25,6 @@ void send_request(int sockfd, int request_code);
 void get_and_display_message(int sockfd);
 void get_uname(int sockfd);
 void get_file_list(int sockdf);
-int file_exists(char *filename);
 int request_file_transfer(int sockfd, char *filename);
 void get_file_transfer(int sockfd, char *filename);
 
@@ -144,9 +143,7 @@ void send_request(int sockfd, int request_code)
 void get_and_display_message(int sockfd)
 {
     char message[INPUTSIZ];
-
     get_message(sockfd, message);
-
     printf(">> %s\n", message);
 }
 
@@ -179,12 +176,6 @@ void get_file_list(int sockfd)
     }
 }
 
-int file_exists(char *filename)
-{
-    struct stat buffer;
-    return (stat (filename, &buffer) == 0);
-}
-
 int request_file_transfer(int sockfd, char *filename)
 {
     // Get filename from user
@@ -192,7 +183,8 @@ int request_file_transfer(int sockfd, char *filename)
     scanf("%255s", filename);
 
     // Check file does not already exist on the client
-    if (file_exists(filename))
+    struct stat buffer;
+    if (stat (filename, &buffer) == 0)
     {
         printf("Error - file '%s' already exists\n", filename);
         return 0;
@@ -247,13 +239,13 @@ void get_file_transfer(int sockfd, char *filename)
                     fwrite(buffer, sizeof(char), bytes_read, file);
                     bytes_remaining -= bytes_read;
                     // float percentage = (bytes_remaining / total_bytes) * 100.0;
-                    fprintf(stdout, ">> Transfered %d of %d bytes\n", total_bytes - bytes_remaining, total_bytes);
+                    printf(">> Transfered %d of %d bytes\n", total_bytes - bytes_remaining, total_bytes);
                 }
             }
 
             // Cleanup
             fclose(file);
-            fprintf(stdout, ">> File transfer of '%s' complete!\n", filename);
+            printf(">> File transfer of '%s' complete!\n", filename);
         break;
         default:
             puts("Error - unknown response");
