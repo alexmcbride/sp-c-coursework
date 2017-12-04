@@ -235,23 +235,32 @@ void get_file_transfer(int sockfd, char *filename)
             {
                 // Read bytes from socket.
                 bytes_read = recv(sockfd, buffer, BUFSIZ, 0);
-                if (bytes_read > 0)
-                {
-                    // Write bytes to local file
-                    fwrite(buffer, sizeof(char), bytes_read, file);
-                    bytes_remaining -= bytes_read;
-                    // float percentage = (bytes_remaining / total_bytes) * 100.0;
-                    printf(">> Transfered %d of %d bytes\n", total_bytes - bytes_remaining, total_bytes);
-                }
-                else
+
+                // Break loop if no bytes returned
+                if (bytes_read == 0)
                 {
                     break;
                 }
+
+                // Write bytes to local file
+                fwrite(buffer, sizeof(char), bytes_read, file);
+                bytes_remaining -= bytes_read;
+                // float percentage = (bytes_remaining / total_bytes) * 100.0;
+                printf(">> Transfered %d of %d bytes\n", total_bytes - bytes_remaining, total_bytes);
             }
 
-            // Cleanup
+            // Cleanup file pointer
             fclose(file);
-            printf(">> File transfer of '%s' complete!\n", filename);
+
+            // Output appropriate message
+            if (bytes_remaining == 0)
+            {
+                printf(">> Transfer of '%s' complete\n", filename);
+            }
+            else
+            {
+                printf(">> Transfer of '%s' interrupted\n", filename);
+            }
         break;
         default:
             puts("Error - unknown response");
