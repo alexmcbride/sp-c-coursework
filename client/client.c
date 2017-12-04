@@ -79,7 +79,8 @@ int show_menu()
     // Get input from user.
     char input_str[INPUTSIZ] = {0};
     
-    while (fgets(input_str, sizeof(input_str), stdin) != NULL){
+    while (fgets(input_str, sizeof(input_str), stdin) != NULL)
+    {
         // Convert input to int.
         int input = 0;
         if (sscanf(input_str, "%d", &input) != EOF)

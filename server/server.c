@@ -359,7 +359,7 @@ static void signal_handler(int sig, siginfo_t *siginfo, void *context)
     }
 
     // in microseconds...
-    printf("\nTotal execution time: %f seconds\n",
+    printf("\nTotal execution time: %.2f seconds\n",
 	   (double) (end_time.tv_usec - start_time.tv_usec) / 1000000 +
 	   (double) (end_time.tv_sec - start_time.tv_sec));
 
