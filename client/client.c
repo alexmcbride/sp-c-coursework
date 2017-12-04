@@ -1,6 +1,3 @@
-// Cwk2: client.c - message length headers with variable sized payloads
-//  also use of readn() and writen() implemented in separate code module
-
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -77,8 +74,9 @@ int show_menu()
     printf("Choose option: ");
 
     // Get input from user.
-    char input_str[INPUTSIZ] = {0};
-    
+    char input_str[INPUTSIZ];
+    memset(input_str, 0, sizeof(input_str));
+
     while (fgets(input_str, sizeof(input_str), stdin) != NULL)
     {
         // Convert input to int.
@@ -204,8 +202,8 @@ int request_file_transfer(int sockfd, char *filename)
 void get_file_transfer(int sockfd, char *filename)
 {
     int file_status;
-    char error[INPUTSIZ] = {0};
-    char buffer[BUFSIZ] = {0};
+    char error[INPUTSIZ];
+    char buffer[BUFSIZ];
     int total_bytes;
     int bytes_read;
     FILE *file;

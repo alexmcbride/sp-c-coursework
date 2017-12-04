@@ -1,5 +1,3 @@
-// Cwk2: server.c - multi-threaded server using readn() and writen()
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -325,8 +323,7 @@ void store_start_time()
     // Store server start time.
     if (gettimeofday(&start_time, NULL) == -1)
     {
-        perror("gettimeofday error");
-        exit(EXIT_FAILURE);
+        die("gettimeofday error");
     }
 }
 
@@ -354,8 +351,7 @@ static void signal_handler(int sig, siginfo_t *siginfo, void *context)
     struct timeval end_time;
     if (gettimeofday(&end_time, NULL) == -1)
     {
-        perror("gettimeofday error");
-        exit(EXIT_FAILURE);
+        die("gettimeofday error");
     }
 
     // in microseconds...
