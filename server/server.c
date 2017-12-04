@@ -21,6 +21,7 @@
 #include <sys/sendfile.h>
 #include <fcntl.h>
 #include "../shared/shared.h"
+#include "../shared/hexdump.h"
 
 // Constants
 #define STUDENT_ID "S1715224"
@@ -226,9 +227,11 @@ void handle_file_transfer(int sockfd)
     int fd = open(local_path, O_RDONLY);
     if (fd == -1)
     {
+        char *err_str = strerror(errno);
+
         status = FILE_ERROR;
         write_socket(sockfd, (unsigned char *)&status, sizeof(int));
-        send_message(sockfd, strerror(errno));
+        send_message(sockfd, err_str);
         return;
     }
 
@@ -253,7 +256,7 @@ void handle_file_transfer(int sockfd)
     // Transfer file
     off_t offset = 0;
     int bytes_sent = 0;
-    while (((bytes_sent = sendfile(sockfd, fd, &offset, BUFSIZ)) > 0) && bytes_remaining > 0)
+    while (((bytes_sent = sendfile(sockfd, fd, &offset, BUFSIZ)) > 0) && bytes_remaining > 0) {
         bytes_remaining += bytes_sent;
     }
 

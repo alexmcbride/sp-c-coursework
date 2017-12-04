@@ -15,6 +15,7 @@
 #include <limits.h>
 #include <sys/stat.h>
 #include "../shared/shared.h"
+#include "../shared/hexdump.h"
 
 // Constants
 #define HOST_ADDRESS "127.0.0.1"
@@ -76,14 +77,15 @@ int show_menu()
     printf("Choose option: ");
 
     // Get input from user.
-    char input_str[INPUTSIZ];
-    fgets(input_str, sizeof(input_str), stdin);
-
-    // Convert input to int.
-    int input;
-    if (sscanf(input_str, "%d", &input))
-    {
-        return input;
+    char input_str[INPUTSIZ] = {0};
+    
+    while (fgets(input_str, sizeof(input_str), stdin) != NULL){
+        // Convert input to int.
+        int input = 0;
+        if (sscanf(input_str, "%d", &input) != EOF)
+        {
+            return input;
+        }
     }
 
     return -1;
@@ -181,6 +183,7 @@ int request_file_transfer(int sockfd, char *filename)
     // Get filename from user
     printf("Enter filename: ");
     scanf("%255s", filename);
+    filename[strcspn(filename, "\n")] = 0;
 
     // Check file does not already exist on the client
     struct stat buffer;
@@ -200,8 +203,8 @@ int request_file_transfer(int sockfd, char *filename)
 void get_file_transfer(int sockfd, char *filename)
 {
     int file_status;
-    char error[INPUTSIZ];
-    char buffer[BUFSIZ];
+    char error[INPUTSIZ] = {0};
+    char buffer[BUFSIZ] = {0};
     int total_bytes;
     int bytes_read;
     FILE *file;
