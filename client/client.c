@@ -70,6 +70,7 @@ int main(void)
     exit(EXIT_SUCCESS);
 }
 
+// Show main menu and get user input
 int show_menu()
 {
     printf("Main menu:\n");
@@ -97,6 +98,7 @@ int show_menu()
     return -1;
 }
 
+// handle the connection to the server and make requests
 void handle_server(int sockfd)
 {
     char filename[INPUTSIZ];
