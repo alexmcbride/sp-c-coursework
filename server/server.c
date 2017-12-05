@@ -1,3 +1,10 @@
+/*
+ * Author : Alex McBride
+ * Student ID: S1715224
+ * Date: 05/12/2017
+ * The server-side code for the C coursework.
+ */
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -68,7 +75,7 @@ int main(void)
     }
     // end socket setup
 
-    // Init sigaction to handle SIGINT
+    // Init signal handler to handle SIGINT
     initialize_signal_handler();
 
     //Accept and incoming connection
@@ -100,6 +107,7 @@ int main(void)
     exit(EXIT_SUCCESS);
 }
 
+// Gets the IP of the server
 void get_ip_address(char *ip_str)
 {
     int fd;
@@ -117,6 +125,7 @@ void get_ip_address(char *ip_str)
     strcpy(ip_str, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
 }
 
+// Responds to the student ID request from a client.
 void handle_student_id(int connfd)
 {
     // Get IP address
@@ -125,13 +134,14 @@ void handle_student_id(int connfd)
     get_ip_address(ip_str);
 
     // Concat string
-    char str[24];
+    char str[32];
     sprintf(str, "%s:%s", ip_str, STUDENT_ID);
 
     // Send to client
     send_message(connfd, str);
 }
 
+// Responds to server time request from a client.
 void handle_server_time(int connfd)
 {
     // Get time.
@@ -156,6 +166,7 @@ void handle_server_time(int connfd)
     send_message(connfd, time_str);
 }
 
+// Respond to uname request from a client.
 void handle_uname(int connfd)
 {
     struct utsname uts;
@@ -163,17 +174,17 @@ void handle_uname(int connfd)
     {
         die("uname error");
     }
-
     write_socket(connfd, (unsigned char *)&uts, sizeof(struct utsname));
 }
 
 // Filter scandir to show only regular files
 int filter_dir(const struct dirent *e)
 {
-    // Supported in Linux Mint, but not every Linux file system.
+    // Supported in Linux Mint, but might not work on every Linux file system.
     return e->d_type == DT_REG;
 }
 
+// Respond to a request for the upload directory file list.
 void handle_file_list(int socket)
 {
     // Create upload directory if it doesn't exist.
@@ -211,56 +222,58 @@ void handle_file_list(int socket)
     }
 }
 
+// Respond to request for a file transfer from a client.
 void handle_file_transfer(int sockfd)
 {
     int status = 0;
-
     char filename[NAME_MAX];
+
+    // Get name of file to transfer
     get_message(sockfd, filename);
 
-    // Create local file path
+    // Create local file path for this file.
     char local_path[NAME_MAX];
     strcpy(local_path, UPLOAD_DIR);
     strcat(local_path, filename);
 
-    // Open file etc.
+    // Try to open file etc.
     int fd = open(local_path, O_RDONLY);
     if (fd == -1)
     {
-        char *err_str = strerror(errno);
-
-        status = FILE_ERROR;
-        write_socket(sockfd, (unsigned char *)&status, sizeof(int));
-        send_message(sockfd, err_str);
-        return;
-    }
-
-    // Get stat for file size
-    struct stat file_stat;
-    if (fstat(fd, &file_stat) < 0)
-    {
+        // Send error to client.
         status = FILE_ERROR;
         write_socket(sockfd, (unsigned char *)&status, sizeof(int));
         send_message(sockfd, strerror(errno));
         return;
     }
 
-    // If we get to this point, we're good to go!
+    // Use fstat to get file size.
+    struct stat file_stat;
+    if (fstat(fd, &file_stat) < 0)
+    {
+        // Oh no!
+        status = FILE_ERROR;
+        write_socket(sockfd, (unsigned char *)&status, sizeof(int));
+        send_message(sockfd, strerror(errno));
+        return;
+    }
+
+    // If we get to this point, then we're good to go!
     status = FILE_OK;
     write_socket(sockfd, (unsigned char *)&status, sizeof(int));
 
     // Send file size
-    int bytes_remaining = file_stat.st_size; // Get file size
+    int bytes_remaining = file_stat.st_size;
     write_socket(sockfd, (unsigned char *)&bytes_remaining, sizeof(int));
 
-    // Transfer file
+    // Transfer file using sendfile.
     off_t offset = 0;
     int bytes_sent = 0;
     while (((bytes_sent = sendfile(sockfd, fd, &offset, BUFSIZ)) > 0) && bytes_remaining > 0) {
         bytes_remaining += bytes_sent;
     }
 
-    // Cleanup
+    // Cleanup file pointer.
     close(fd);
 }
 
@@ -273,17 +286,17 @@ void *client_handler(void *socket_desc)
 
     while (1)
     {
+        // Wait for client to send a request code.
         int request_code;
         int count = readn(connfd, (unsigned char *) &request_code, sizeof(int));
         if (count == 0)
         {
-            // Client disconnected
-            break;
+            break; // Client disconnected
         }
         else if (count < 0)
         {
-            // Error
-            printf("Error - client read error: %d\n", count);
+            // Oh no!
+            printf("Error - client read error: %s\n", strerror(errno));
             break;
         }
 
@@ -311,15 +324,17 @@ void *client_handler(void *socket_desc)
         }
     }
 
+    // Client go bye bye!
     printf("Thread %lu exiting\n", (unsigned long) pthread_self());
 
-    // always clean up sockets gracefully
+    // Cleanup after outselves.
     shutdown(connfd, SHUT_RDWR);
     close(connfd);
 
     return 0;
 }
 
+// Store the server start time from the signal handler.
 void store_start_time()
 {
     // Store server start time.
@@ -329,6 +344,7 @@ void store_start_time()
     }
 }
 
+// Hook up a handler to the SIGINT interupt signal.
 void initialize_signal_handler()
 {
     struct sigaction act;
@@ -342,7 +358,7 @@ void initialize_signal_handler()
     }
 }
 
-// signal handler to be called on receipt of SIGINT
+// Signal handler to be called on receipt of SIGINT
 static void signal_handler(int sig, siginfo_t *siginfo, void *context)
 {
     // Shutdown and close listen socket

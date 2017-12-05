@@ -1,3 +1,10 @@
+/*
+ * Author : Alex McBride
+ * Student ID: S1715224
+ * Date: 05/12/2017
+ * Header file for code shared between client and server.
+ */
+
 #ifndef _SHARED_H
 #define _SHARED_H
 
