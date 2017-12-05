@@ -216,7 +216,7 @@ void get_file_transfer(int sockfd, char *filename)
         case FILE_ERROR:
             // Get error message.
             get_message(sockfd, error);
-            printf(">> Error '%s' - %s\n", filename, error);
+            printf(">> Error - failed to read server file: %s\n", error);
         break;
         case FILE_OK:
             // Get total size of file to send
@@ -226,7 +226,8 @@ void get_file_transfer(int sockfd, char *filename)
             file = fopen(filename, "w");
             if (file == NULL)
             {
-                die("Error - failed to open file");
+                printf("Error - failed to open local file: %s\n", strerror(errno));
+                return;
             }
 
             // Keep looping until read all bytes

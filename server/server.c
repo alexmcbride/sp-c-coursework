@@ -71,6 +71,7 @@ int main(void)
     initialize_signal_handler();
 
     //Accept and incoming connection
+    // TODO: look at thread cleanup stuff: http://www.informit.com/articles/article.aspx?p=2085690&seqNum=5
     puts("Waiting for incoming connections...");
     while (1)
     {
