@@ -126,7 +126,7 @@ void handle_server(int sockfd)
                 }
             break;
             case REQUEST_QUIT:
-                printf("Now exiting!\n");
+                printf("Exiting...\n");
                 running = 0;
             break;
             default:
@@ -134,6 +134,9 @@ void handle_server(int sockfd)
             break;
         }
     }
+
+    // Cleanup client socket.
+    close(sockfd);
 }
 
 void send_request(int sockfd, int request_code)

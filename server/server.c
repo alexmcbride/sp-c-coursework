@@ -47,6 +47,7 @@ int main(void)
 {
     int connfd = 0;
 
+    // Store the start time of the server
     store_start_time();
 
     struct sockaddr_in serv_addr;
