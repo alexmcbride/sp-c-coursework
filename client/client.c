@@ -177,7 +177,7 @@ void get_uname(int sockfd)
 // Get the list of files from the server and display them.
 void get_file_list(int sockfd)
 {
-    // Get status of request
+    // The server first sends the status, which is either ERROR or OK.
     int file_status = 0;
     read_socket(sockfd, (unsigned char *)&file_status, sizeof(int));
 
@@ -190,8 +190,8 @@ void get_file_list(int sockfd)
     }
     else if (file_status == FILE_OK)
     {
-        // Server first sends total number of files
-        // Then sends each file name. File name preceded with length, also has null terminator
+        // Server first sends total number of files, then sends each file name. File name preceded 
+        // with length, also has null terminator
         int total_files;
         read_socket(sockfd, (unsigned char *) &total_files, sizeof(int));
 

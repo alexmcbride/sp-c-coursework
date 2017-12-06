@@ -24,10 +24,7 @@ size_t write_socket(int sockfd, unsigned char *buffer, int length)
 	if (result <= 0)
 	{
 		close(sockfd);
-
-		char error[ERR_MSG_SIZE];
-		sprintf(error, "Error - write socket error: %d", result);
-		die(error);
+		die("Error - write socket");
 	}
 	return result;
 }
@@ -41,15 +38,11 @@ size_t read_socket(int sockfd, unsigned char *buffer, int length)
 	if (result == 0)
 	{
 		close(sockfd);
-		die("Error - connection lost");
 	}
 	else if (result < 0)
 	{
 		close(sockfd);
-
-		char error[ERR_MSG_SIZE];
-		sprintf(error, "Error - read socket error: %d", result);
-		die(error);
+		die("Error - read socket");
 	}
 	return result;
 }
@@ -60,8 +53,8 @@ size_t read_socket(int sockfd, unsigned char *buffer, int length)
 void send_message(int socket, char *message)
 {
     size_t length = strlen(message) + 1; // Add one to account for NULL terminator
-    writen(socket, (unsigned char *) &length, sizeof(size_t));
-    writen(socket, (unsigned char *) message, length);
+    write_socket(socket, (unsigned char *) &length, sizeof(size_t));
+    write_socket(socket, (unsigned char *) message, length);
 }
 
 /*
