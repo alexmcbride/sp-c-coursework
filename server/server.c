@@ -332,6 +332,7 @@ void handle_file_transfer(int sockfd)
 // Helper for sending an errno to the client.
 void send_file_error(int sockfd)
 {
+    // First we send the status, then the errno
     int status = FILE_ERROR;
     write_socket(sockfd, (unsigned char *)&status, sizeof(int));
     write_socket(sockfd, (unsigned char *)&errno, sizeof(int));
