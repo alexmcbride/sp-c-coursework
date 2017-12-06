@@ -180,16 +180,28 @@ void get_file_list(int sockfd)
     // Server first sends total number of files
     // Then sends each file name.
     // File name preceded with length, also has null terminator
-    int total_files;
-    read_socket(sockfd, (unsigned char *) &total_files, sizeof(int));
+    int file_status;
+    read_socket(sockfd, (unsigned char *)&file_status, sizeof(int));
 
-    printf(">> List of server files (%d):\n", total_files);
-
-    for (int i = 0; i < total_files; i++)
+    if (file_status == FILE_ERROR)
     {
-        char filename[NAME_MAX]; // max size of file name
-        get_message(sockfd, filename);
-        printf(">> %s\n", filename);
+        int error_number = 0;
+        read_socket(sockfd, (unsigned char *)&error_number, sizeof(int));
+        printf(">> Error - %s\n", strerror(error_number));
+    }
+    else if(file_status == FILE_OK)
+    {
+        int total_files;
+        read_socket(sockfd, (unsigned char *) &total_files, sizeof(int));
+
+        printf(">> List of server files (%d):\n", total_files);
+
+        for (int i = 0; i < total_files; i++)
+        {
+            char filename[NAME_MAX]; // max size of file name
+            get_message(sockfd, filename);
+            printf(">> %s\n", filename);
+        }
     }
 }
 

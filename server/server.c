@@ -108,6 +108,63 @@ int main(void)
     exit(EXIT_SUCCESS);
 }
 
+void *client_handler(void *socket_desc)
+{
+    int connfd = *(int *) socket_desc;
+
+    // Send welcome message to client.
+    send_message(connfd, "Welcome to the server!");
+
+    while (1)
+    {
+        // Wait for client to send a request code.
+        int request_code;
+        int result = readn(connfd, (unsigned char *) &request_code, sizeof(int));
+        if (result == 0)
+        {
+            break; // Client disconnected
+        }
+        else if (result < 0)
+        {
+            // Oh no!
+            printf("Error - client read error: %s\n", strerror(errno));
+            break;
+        }
+
+        // Handle client requests
+        switch (request_code)
+        {
+            case REQUEST_STUDENT_ID:
+                handle_student_id(connfd);
+            break;
+            case REQUEST_TIME:
+                handle_server_time(connfd);
+            break;
+            case REQUEST_UNAME:
+                handle_uname(connfd);
+            break;
+            case REQUEST_FILE_LIST:
+                handle_file_list(connfd);
+            break;
+            case REQUEST_FILE_TRANSFER:
+                handle_file_transfer(connfd);
+            break;
+            default:
+                printf("Error - unknown request\n");
+            break;
+        }
+    }
+
+    // Client go bye bye!
+    printf("Thread %lu exiting\n", (unsigned long) pthread_self());
+
+    // Cleanup after ourselves.
+    shutdown(connfd, SHUT_RDWR);
+    close(connfd);
+
+    return 0;
+}
+
 // Gets the IP of the server
 void get_ip_address(char *ip_str)
 {
@@ -193,14 +250,19 @@ void handle_file_list(int socket)
     // Scan upload directory.
     struct dirent **namelist;
     int n;
+    int status = 0;
     if ((n = scandir(UPLOAD_DIR, &namelist, filter_dir, alphasort)) == -1)
     {
-        die("Error - scandir");
+        status = FILE_ERROR;
+        write_socket(socket, (unsigned char *)&status, sizeof(int));
+        write_socket(socket, (unsigned char *)&errno, sizeof(int));
     }
     else
     {
-        // Send total number of files first
-        writen(socket, (unsigned char *)&n, sizeof(int));
+        // Send OK status then total number of files first
+        status = FILE_OK;
+        write_socket(socket, (unsigned char *)&status, sizeof(int));
+        write_socket(socket, (unsigned char *)&n, sizeof(int));
 
         // Send each filename to the client.
         while (n--)
@@ -271,63 +333,6 @@ void handle_file_transfer(int sockfd)
 
     // Cleanup file pointer.
     close(fd);
-}
-
-void *client_handler(void *socket_desc)
-{
-    int connfd = *(int *) socket_desc;
-
-    // Send welcome message to client.
-    send_message(connfd, "Welcome to the server!");
-
-    while (1)
-    {
-        // Wait for client to send a request code.
-        int request_code;
-        int result = readn(connfd, (unsigned char *) &request_code, sizeof(int));
-        if (result == 0)
-        {
-            break; // Client disconnected
-        }
-        else if (result < 0)
-        {
-            // Oh no!
-            printf("Error - client read error: %s\n", strerror(errno));
-            break;
-        }
-
-        // Handle client requests
-        switch (request_code)
-        {
-            case REQUEST_STUDENT_ID:
-                handle_student_id(connfd);
-            break;
-            case REQUEST_TIME:
-                handle_server_time(connfd);
-            break;
-            case REQUEST_UNAME:
-                handle_uname(connfd);
-            break;
-            case REQUEST_FILE_LIST:
-                handle_file_list(connfd);
-            break;
-            case REQUEST_FILE_TRANSFER:
-                handle_file_transfer(connfd);
-            break;
-            default:
-                printf("Error - unknown request\n");
-            break;
-        }
-    }
-
-    // Client go bye bye!
-    printf("Thread %lu exiting\n", (unsigned long) pthread_self());
-
-    // Cleanup after outselves.
-    shutdown(connfd, SHUT_RDWR);
-    close(connfd);
-
-    return 0;
 }
 
 // Store the server start time from the signal handler.
