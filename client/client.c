@@ -162,18 +162,36 @@ void get_uname(int sockfd)
 
 void get_file_list(int sockfd)
 {
-    // Server first sends total number of files
-    // Then sends each file name. File name preceded with length, also has null terminator
-    int total_files;
-    read_socket(sockfd, (unsigned char *) &total_files, sizeof(int));
+    // Get status of request
+    int file_status = 0;
+    read_socket(sockfd, (unsigned char *)&file_status, sizeof(int));
 
-    printf(">> List of server files (%d):\n", total_files);
-
-    for (int i = 0; i < total_files; i++)
+    if (file_status == FILE_ERROR)
     {
-        char filename[NAME_MAX]; // max size of file name
-        get_message(sockfd, filename);
-        printf(">> %s\n", filename);
+        // Get error number from socket and print out error.
+        int error_number = 0;
+        read_socket(sockfd, (unsigned char *)&error_number, sizeof(int));
+        printf(">> Error - failed to read server directory: %s\n", strerror(error_number));
+    }
+    else if (file_status == FILE_OK)
+    {
+        // Server first sends total number of files
+        // Then sends each file name. File name preceded with length, also has null terminator
+        int total_files;
+        read_socket(sockfd, (unsigned char *) &total_files, sizeof(int));
+
+        printf(">> List of server files (%d):\n", total_files);
+
+        for (int i = 0; i < total_files; i++)
+        {
+            char filename[NAME_MAX]; // max size of file name
+            get_message(sockfd, filename);
+            printf(">> %s\n", filename);
+        }   
+    }
+    else
+    {
+        printf("Error - unknown response\n");
     }
 }
 
@@ -202,7 +220,7 @@ int request_file_transfer(int sockfd, char *filename)
 void get_file_transfer(int sockfd, char *filename)
 {
     int file_status;
-    char error[INPUTSIZ];
+    int error_number;
     char buffer[BUFSIZ];
     int total_bytes;
     int bytes_read;
@@ -214,9 +232,9 @@ void get_file_transfer(int sockfd, char *filename)
     switch (file_status)
     {
         case FILE_ERROR:
-            // Get error message.
-            get_message(sockfd, error);
-            printf(">> Error - failed to read server file: %s\n", error);
+            // Get error message from socket and output error message.
+            read_socket(sockfd, (unsigned char *)&error_number, sizeof(int));
+            printf(">> Error - failed to read server file: %s\n", strerror(error_number));
         break;
         case FILE_OK:
             // Get total size of file to send

@@ -1,3 +1,10 @@
+/*
+ * Author : Alex McBride
+ * Student ID: S1715224
+ * Date: 05/12/2017
+ * Header file for code shared between client and server.
+ */
+
 #ifndef _SHARED_H
 #define _SHARED_H
 
@@ -9,7 +16,7 @@
 
 // General constants
 #define PORT_NUMBER 50031
-#define ERR_MSG_SIZE 64
+#define ERR_MSG_SIZE 256
 #define INPUTSIZ 256
 
 // Requests that can be sent from the client to the server.

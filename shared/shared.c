@@ -1,3 +1,9 @@
+/*
+ * Author : Alex McBride
+ * Student ID: S1715224
+ * Date: 05/12/2017
+ Code shared between both client and server for the C coursework.
+ */
 #include "shared.h"
 
 /*
