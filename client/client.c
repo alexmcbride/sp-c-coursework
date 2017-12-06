@@ -1,3 +1,10 @@
+/*
+ * Author : Alex McBride
+ * Student ID: S1715224
+ * Date: 05/12/2017
+ * The client-side code for the C coursework
+ */
+
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -19,6 +26,7 @@
 
 // Function declarations
 void handle_server(int sockfd);
+int show_menu();
 void send_request(int sockfd, int request_code);
 void get_and_display_message(int sockfd);
 void get_uname(int sockfd);
@@ -62,6 +70,7 @@ int main(void)
     exit(EXIT_SUCCESS);
 }
 
+// Show main menu and get user input
 int show_menu()
 {
     printf("Main menu:\n");
@@ -76,7 +85,6 @@ int show_menu()
     // Get input from user.
     char input_str[INPUTSIZ];
     memset(input_str, 0, sizeof(input_str));
-
     while (fgets(input_str, sizeof(input_str), stdin) != NULL)
     {
         // Convert input to int.
@@ -90,11 +98,12 @@ int show_menu()
     return -1;
 }
 
+// handle the connection to the server and make requests
 void handle_server(int sockfd)
 {
     char filename[INPUTSIZ];
 
-    // get welcome message from the server
+    // get welcome message from the server and display it
     get_and_display_message(sockfd);
 
     // show menu and have user select option
@@ -102,6 +111,8 @@ void handle_server(int sockfd)
     while (running)
     {
         int input = show_menu();
+
+        // Handle option, mainly to request something from server and then handle the response.
         switch (input) {
             case REQUEST_STUDENT_ID:
                 send_request(sockfd, REQUEST_STUDENT_ID);
@@ -126,21 +137,23 @@ void handle_server(int sockfd)
                 }
             break;
             case REQUEST_QUIT:
-                printf("Now exiting!\n");
+                printf("Exiting...\n");
                 running = 0;
             break;
             default:
-                fprintf(stderr, "%s", "Error - invalid input\n");
+                printf("Error - invalid input\n");
             break;
         }
     }
 }
 
+// Send a request code to the server.
 void send_request(int sockfd, int request_code)
 {
     write_socket(sockfd, (unsigned char *)&request_code, sizeof(int));
 }
 
+// Get a message response from the server and display the contents.
 void get_and_display_message(int sockfd)
 {
     char message[INPUTSIZ];
@@ -148,6 +161,7 @@ void get_and_display_message(int sockfd)
     printf(">> %s\n", message);
 }
 
+// Get the uname struct from the server and display it.
 void get_uname(int sockfd)
 {
     struct utsname uts;
@@ -160,6 +174,7 @@ void get_uname(int sockfd)
     printf(">> Machine:      %s\n", uts.machine);
 }
 
+// Get the list of files from the server and display them.
 void get_file_list(int sockfd)
 {
     // Get status of request
@@ -195,6 +210,7 @@ void get_file_list(int sockfd)
     }
 }
 
+// Prompt user for filename and then request that the server sends the file
 int request_file_transfer(int sockfd, char *filename)
 {
     // Get filename from user
@@ -217,6 +233,8 @@ int request_file_transfer(int sockfd, char *filename)
     return 1;
 }
 
+// Gets file transfer response, server responds first with the file status, and
+// follows that up with either an error message or the transfer itself.
 void get_file_transfer(int sockfd, char *filename)
 {
     int file_status;
@@ -237,7 +255,7 @@ void get_file_transfer(int sockfd, char *filename)
             printf(">> Error - failed to read server file: %s\n", strerror(error_number));
         break;
         case FILE_OK:
-            // Get total size of file to send
+            // Get total size of file to receive
             read_socket(sockfd, (unsigned char *)&total_bytes, sizeof(int));
 
             // Open file for writing on this side
@@ -264,7 +282,8 @@ void get_file_transfer(int sockfd, char *filename)
                 // Write bytes to local file
                 fwrite(buffer, sizeof(char), bytes_read, file);
                 bytes_remaining -= bytes_read;
-                // float percentage = (bytes_remaining / total_bytes) * 100.0;
+
+                // Output amount transfered.
                 printf(">> Transfered %d of %d bytes\n", total_bytes - bytes_remaining, total_bytes);
             }
 
@@ -282,7 +301,7 @@ void get_file_transfer(int sockfd, char *filename)
             }
         break;
         default:
-            puts("Error - unknown response");
+            puts("Error - unknown server response");
         break;
     }
 }
