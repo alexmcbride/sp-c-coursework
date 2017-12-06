@@ -44,6 +44,7 @@ void get_ip_address(char *ip_str);
 void store_start_time();
 void initialize_signal_handler();
 static void signal_handler(int sig, siginfo_t *siginfo, void *context);
+void create_upload_directory();
 
 // Global variables
 static struct timeval start_time; // server start time
@@ -187,14 +188,7 @@ int filter_dir(const struct dirent *e)
 // Respond to a request for the upload directory file list.
 void handle_file_list(int socket)
 {
-    // Create upload directory if it doesn't exist.
-    struct stat st;
-    memset(&st, 0, sizeof(struct stat));
-    if (stat(UPLOAD_DIR, &st) == -1)
-    {
-        mkdir(UPLOAD_DIR, 0744);
-        printf("Created upload directory\n");
-    }
+    create_upload_directory();
 
     // Scan upload directory.
     struct dirent **namelist;
@@ -227,6 +221,8 @@ void handle_file_transfer(int sockfd)
 {
     int status = 0;
     char filename[NAME_MAX];
+
+    create_upload_directory();
 
     // Get name of file to transfer
     get_message(sockfd, filename);
@@ -288,12 +284,12 @@ void *client_handler(void *socket_desc)
     {
         // Wait for client to send a request code.
         int request_code;
-        int count = readn(connfd, (unsigned char *) &request_code, sizeof(int));
-        if (count == 0)
+        int result = readn(connfd, (unsigned char *) &request_code, sizeof(int));
+        if (result == 0)
         {
             break; // Client disconnected
         }
-        else if (count < 0)
+        else if (result < 0)
         {
             // Oh no!
             printf("Error - client read error: %s\n", strerror(errno));
@@ -381,4 +377,16 @@ static void signal_handler(int sig, siginfo_t *siginfo, void *context)
     printf("Exiting...\n");
 
     exit(EXIT_FAILURE);
+}
+
+// Create upload directory if it doesn't exist.
+void create_upload_directory()
+{
+    struct stat st;
+    memset(&st, 0, sizeof(struct stat));
+    if (stat(UPLOAD_DIR, &st) == -1)
+    {
+        mkdir(UPLOAD_DIR, 0744);
+        printf("Created upload directory\n");
+    }
 }
