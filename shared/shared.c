@@ -11,7 +11,15 @@
  */
 void die(char *message)
 {
-	perror(message);
+	printf("%s\n", message);
+
+	// Check if there's an error set.
+	if (errno > 0)
+	{
+		printf("%s\n", strerror(errno));
+	}
+
+	// Bye!
 	exit(EXIT_FAILURE);
 }
 

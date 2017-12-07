@@ -1,3 +1,10 @@
+/*
+ * Author : Alex McBride
+ * Student ID: S1715224
+ * Date: 05/12/2017
+ * The client-side code for the C coursework
+ */
+
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -14,8 +21,10 @@
 #include "../shared/shared.h"
 #include "../shared/hexdump.h"
 
+// Constants
 #define HOST_ADDRESS "127.0.0.1"
 
+// Function declarations
 void handle_server(int sockfd);
 int show_menu();
 void send_request(int sockfd, int request_code);
@@ -25,8 +34,10 @@ void get_file_list(int sockdf);
 int request_file_transfer(int sockfd, char *filename);
 void get_file_transfer(int sockfd, char *filename);
 
+// Functions
 int main(void)
 {
+    // *** this code down to the next "// ***" does not need to be changed except the port number
     int sockfd = 0;
     struct sockaddr_in serv_addr;
 
@@ -36,9 +47,12 @@ int main(void)
     }
 
     serv_addr.sin_family = AF_INET;
+
+    // IP address and port of server we want to connect to
     serv_addr.sin_port = htons(PORT_NUMBER);
     serv_addr.sin_addr.s_addr = inet_addr(HOST_ADDRESS);
 
+    // try to connect...
     if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) == -1)
     {
         die("Error - connect failed\n");
@@ -48,8 +62,10 @@ int main(void)
         printf("Connected to server...\n");
     }
 
+    // Handle communication with the server.
     handle_server(sockfd);
 
+    // make sure sockets are cleaned up
     close(sockfd);
     exit(EXIT_SUCCESS);
 }
@@ -141,7 +157,6 @@ void send_request(int sockfd, int request_code)
 void get_and_display_message(int sockfd)
 {
     char message[INPUTSIZ];
-    memset(message, 0, sizeof(message));
     get_message(sockfd, message);
     printf(">> %s\n", message);
 }
@@ -176,7 +191,7 @@ void get_file_list(int sockfd)
     }
     else if (file_status == FILE_OK)
     {
-        // Server first sends total number of files, then sends each file name. File name preceded
+        // Server first sends total number of files, then sends each file name. File name preceded 
         // with length, also has null terminator
         int total_files;
         read_socket(sockfd, (unsigned char *) &total_files, sizeof(int));
@@ -188,7 +203,7 @@ void get_file_list(int sockfd)
             char filename[NAME_MAX]; // max size of file name
             get_message(sockfd, filename);
             printf(">> %s\n", filename);
-        }
+        }   
     }
     else
     {
