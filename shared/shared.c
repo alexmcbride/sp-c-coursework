@@ -38,6 +38,7 @@ size_t read_socket(int sockfd, unsigned char *buffer, int length)
 	if (result == 0)
 	{
 		close(sockfd);
+		die("Error - connection closed");
 	}
 	else if (result < 0)
 	{
