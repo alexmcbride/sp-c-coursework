@@ -310,6 +310,7 @@ void handle_file_transfer(int sockfd)
         return;
     }
 
+
     // If we get to this point, then we're good to go!
     status = FILE_OK;
     write_socket(sockfd, (unsigned char *)&status, sizeof(int));
@@ -322,7 +323,7 @@ void handle_file_transfer(int sockfd)
     off_t offset = 0;
     int bytes_sent = 0;
     while (((bytes_sent = sendfile(sockfd, fd, &offset, BUFSIZ)) > 0) && bytes_remaining > 0) {
-        bytes_remaining += bytes_sent;
+        bytes_remaining -= bytes_sent;
     }
 
     // Cleanup file pointer.

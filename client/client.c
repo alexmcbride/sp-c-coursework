@@ -179,6 +179,7 @@ void get_file_list(int sockfd)
 {
     // The server first sends the status, which is either ERROR or OK.
     int file_status = 0;
+    int i;
     read_socket(sockfd, (unsigned char *)&file_status, sizeof(int));
 
     if (file_status == FILE_ERROR)
@@ -197,7 +198,7 @@ void get_file_list(int sockfd)
 
         printf(">> List of server files (%d):\n", total_files);
 
-        for (int i = 0; i < total_files; i++)
+        for (i = 0; i < total_files; i++)
         {
             char filename[NAME_MAX]; // max size of file name
             get_message(sockfd, filename);
