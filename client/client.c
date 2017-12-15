@@ -54,7 +54,6 @@ int main(void)
     exit(EXIT_SUCCESS);
 }
 
-// Show main menu and get user input
 int show_menu()
 {
     printf("Main menu:\n");
@@ -66,12 +65,10 @@ int show_menu()
     printf("6. Quit\n");
     printf("Choose option: ");
 
-    // Get input from user.
     char input_str[INPUTSIZ];
     memset(input_str, 0, sizeof(input_str));
     while (fgets(input_str, sizeof(input_str), stdin) != NULL)
     {
-        // Convert input to int.
         int input = 0;
         if (sscanf(input_str, "%d", &input) != EOF)
         {
@@ -82,21 +79,17 @@ int show_menu()
     return -1;
 }
 
-// handle the connection to the server and make requests
 void handle_server(int sockfd)
 {
     char filename[INPUTSIZ];
 
-    // get welcome message from the server and display it
     get_and_display_message(sockfd);
 
-    // show menu and have user select option
     int running = 1;
     while (running)
     {
         int input = show_menu();
 
-        // Handle option, mainly to request something from server and then handle the response.
         switch (input) {
             case REQUEST_STUDENT_ID:
                 send_request(sockfd, REQUEST_STUDENT_ID);
@@ -131,13 +124,11 @@ void handle_server(int sockfd)
     }
 }
 
-// Send a request code to the server.
 void send_request(int sockfd, int request_code)
 {
     write_socket(sockfd, (unsigned char *)&request_code, sizeof(int));
 }
 
-// Get a message response from the server and display the contents.
 void get_and_display_message(int sockfd)
 {
     char message[INPUTSIZ];
@@ -146,7 +137,6 @@ void get_and_display_message(int sockfd)
     printf(">> %s\n", message);
 }
 
-// Get the uname struct from the server and display it.
 void get_uname(int sockfd)
 {
     struct utsname uts;
@@ -159,25 +149,20 @@ void get_uname(int sockfd)
     printf(">> Machine:      %s\n", uts.machine);
 }
 
-// Get the list of files from the server and display them.
 void get_file_list(int sockfd)
 {
-    // The server first sends the status, which is either ERROR or OK.
     int file_status = 0;
     int i;
     read_socket(sockfd, (unsigned char *)&file_status, sizeof(int));
 
     if (file_status == FILE_ERROR)
     {
-        // Get error number from socket and print out error.
         int error_number = 0;
         read_socket(sockfd, (unsigned char *)&error_number, sizeof(int));
         printf(">> Error - failed to read server directory: %s\n", strerror(error_number));
     }
     else if (file_status == FILE_OK)
     {
-        // Server first sends total number of files, then sends each file name. File name preceded
-        // with length, also has null terminator
         int total_files;
         read_socket(sockfd, (unsigned char *) &total_files, sizeof(int));
 
@@ -185,7 +170,7 @@ void get_file_list(int sockfd)
 
         for (i = 0; i < total_files; i++)
         {
-            char filename[NAME_MAX]; // max size of file name
+            char filename[NAME_MAX];
             get_message(sockfd, filename);
             printf(">> %s\n", filename);
         }
@@ -196,15 +181,12 @@ void get_file_list(int sockfd)
     }
 }
 
-// Prompt user for filename and then request that the server sends the file
 int request_file_transfer(int sockfd, char *filename)
 {
-    // Get filename from user
     printf("Enter filename: ");
     scanf("%255s", filename);
     filename[strcspn(filename, "\n")] = 0;
 
-    // Check file does not already exist on the client
     struct stat buffer;
     if (stat (filename, &buffer) == 0)
     {
@@ -212,15 +194,12 @@ int request_file_transfer(int sockfd, char *filename)
         return 0;
     }
 
-    // Request server sends this file
     send_request(sockfd, REQUEST_FILE_TRANSFER);
     send_message(sockfd, filename);
 
     return 1;
 }
 
-// Gets file transfer response, server responds first with the file status, and
-// follows that up with either an error message or the transfer itself.
 void get_file_transfer(int sockfd, char *filename)
 {
     int file_status;
@@ -230,21 +209,17 @@ void get_file_transfer(int sockfd, char *filename)
     int bytes_read;
     FILE *file;
 
-    // First get file status, either OK or ERROR
     read_socket(sockfd, (unsigned char *) &file_status, sizeof(int));
 
     switch (file_status)
     {
         case FILE_ERROR:
-            // Get error message from socket and output error message.
             read_socket(sockfd, (unsigned char *)&error_number, sizeof(int));
             printf(">> Error - failed to read server file: %s\n", strerror(error_number));
         break;
         case FILE_OK:
-            // Get total size of file to receive
             read_socket(sockfd, (unsigned char *)&total_bytes, sizeof(int));
 
-            // Open file for writing on this side
             file = fopen(filename, "w");
             if (file == NULL)
             {
@@ -252,31 +227,24 @@ void get_file_transfer(int sockfd, char *filename)
                 return;
             }
 
-            // Keep looping until read all bytes
             int bytes_remaining = total_bytes;
             while (bytes_remaining > 0)
             {
-                // Read bytes from socket.
                 bytes_read = recv(sockfd, buffer, BUFSIZ, 0);
 
-                // Break loop if no bytes returned
                 if (bytes_read == 0)
                 {
                     break;
                 }
 
-                // Write bytes to local file
                 fwrite(buffer, sizeof(char), bytes_read, file);
                 bytes_remaining -= bytes_read;
 
-                // Output amount transfered.
                 printf(">> Transfered %d of %d bytes\n", total_bytes - bytes_remaining, total_bytes);
             }
 
-            // Cleanup file pointer
             fclose(file);
 
-            // Output appropriate message
             if (bytes_remaining == 0)
             {
                 printf(">> Transfer of '%s' complete\n", filename);
