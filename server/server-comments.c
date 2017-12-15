@@ -31,6 +31,7 @@
 // Constants
 #define STUDENT_ID "S1715224"
 #define UPLOAD_DIR "upload/"
+#define MAX_THREADS 32
 
 // Function declarations
 void *client_handler(void *);
@@ -58,6 +59,8 @@ int main(void)
 
     // Store the start time of the server
     store_start_time();
+    // Init signal handler to handle SIGINT
+    initialize_signal_handler();
 
     struct sockaddr_in serv_addr;
     struct sockaddr_in client_addr;
@@ -76,9 +79,6 @@ int main(void)
         die("Error - failed to listen");
     }
     // end socket setup
-
-    // Init signal handler to handle SIGINT
-    initialize_signal_handler();
 
     //Accept and incoming connection
     // TODO: look at thread cleanup stuff: http://www.informit.com/articles/article.aspx?p=2085690&seqNum=5

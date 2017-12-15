@@ -56,19 +56,19 @@ ssize_t writen(int fd, const void *buffer, size_t n)
 
     buf = buffer;		/* No pointer arithmetic on "void *" */
     for (totWritten = 0; totWritten < n;) {
-	numWritten = write(fd, buf, n - totWritten);
+    	numWritten = write(fd, buf, n - totWritten);
 
-	/* The "write() returns 0" case should never happen, but the
-	   following ensures that we don't loop forever if it does */
+    	/* The "write() returns 0" case should never happen, but the
+    	   following ensures that we don't loop forever if it does */
 
-	if (numWritten <= 0) {
-	    if (numWritten == -1 && errno == EINTR)
-		continue;	/* Interrupted --> restart write() */
-	    else
-		return -1;	/* Some other error */
-	}
-	totWritten += numWritten;
-	buf += numWritten;
+    	if (numWritten <= 0) {
+    	    if (numWritten == -1 && errno == EINTR)
+    		continue;	/* Interrupted --> restart write() */
+    	    else
+    		return -1;	/* Some other error */
+    	}
+    	totWritten += numWritten;
+    	buf += numWritten;
     }
     return totWritten;		/* Must be 'n' bytes if we get here */
 }

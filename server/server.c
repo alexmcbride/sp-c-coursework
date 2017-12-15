@@ -46,7 +46,8 @@ int main(void)
     int connfd = 0;
 
     store_start_time();
-
+    initialize_signal_handler();
+    
     struct sockaddr_in serv_addr;
     struct sockaddr_in client_addr;
     socklen_t socksize = sizeof(struct sockaddr_in);
@@ -63,8 +64,6 @@ int main(void)
     {
         die("Error - failed to listen");
     }
-
-    initialize_signal_handler();
 
     puts("Waiting for incoming connections...");
     while (1)
@@ -188,7 +187,7 @@ void handle_uname(int connfd)
     struct utsname uts;
     if (uname(&uts) == -1)
     {
-        die("uname error");
+        die("Error - uname");
     }
     write_socket(connfd, (unsigned char *)&uts, sizeof(struct utsname));
 }
@@ -279,7 +278,7 @@ void store_start_time()
 {
     if (gettimeofday(&start_time, NULL) == -1)
     {
-        die("gettimeofday error");
+        die("Error - gettimeofday");
     }
 }
 
@@ -304,7 +303,7 @@ static void signal_handler(int sig, siginfo_t *siginfo, void *context)
     struct timeval end_time;
     if (gettimeofday(&end_time, NULL) == -1)
     {
-        die("gettimeofday error");
+        die("Error - gettimeofday");
     }
 
     printf("\nTotal execution time: %.2f seconds\n",
